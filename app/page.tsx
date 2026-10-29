@@ -58,6 +58,18 @@ export default function Home() {
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<{ id: string; success: boolean; message: string } | null>(null);
+  
+  // QuickBooks Connection State Check
+  const [qbdConnected, setQbdConnected] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('qbd_connected') === 'true') {
+        setQbdConnected(true);
+      }
+    }
+  }, []);
 
   // Sequence Configuration State
   const [sequences, setSequences] = useState([
@@ -214,9 +226,7 @@ export default function Home() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ${
-                activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white'
-              }`}
+              className={'relative px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ' + (activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white')}
             >
               {activeTab === tab.id && (
                 <motion.span
@@ -237,12 +247,30 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-slate-100">{titles[activeTab]}</h1>
           <button
-            onClick={fetchInvoices}
-            className="flex items-center space-x-1.5 text-xs bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:border-blue-500/50 hover:bg-slate-800 text-slate-300 transition"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Sync Live DB</span>
-          </button>
+  onClick={async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/sync/quickbooks', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Successfully synced ${data.count} invoices from QuickBooks!`);
+        fetchInvoices(); // Refresh the table list
+      } else {
+        alert('Sync failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Sync error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }}
+  disabled={loading}
+  className="flex items-center space-x-1.5 text-xs bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition"
+>
+  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+  <span>{loading ? 'Syncing...' : 'Sync Live DB'}</span>
+</button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -351,7 +379,7 @@ export default function Home() {
                       Scanning for overdue invoices · currently targeting{' '}
                       <span className="text-lime-300 font-semibold">{target}</span>
                     </div>
-                    <div className="space-y-2 min-h-[7.5rem]">
+                    <div className="space-y-2 h-[10.5rem] overflow-hidden">
                       <AnimatePresence initial={false}>
                         {feed.map((f, i) => (
                           <motion.div
@@ -586,15 +614,19 @@ export default function Home() {
             {activeTab === 'integrations' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { name: 'Stripe', desc: 'Sync invoices & payment links in real time.', status: 'Connected', color: 'from-violet-600 to-indigo-500' },
-                  { name: 'Supabase', desc: `Live database · ${invoices.length} invoice rows.`, status: 'Connected', color: 'from-emerald-600 to-green-500' },
-                  { name: 'QuickBooks', desc: 'Import overdue invoices from your books.', status: 'Coming soon', color: 'from-green-600 to-lime-500' },
-                  { name: 'WhatsApp', desc: 'Send pings over WhatsApp as well as email.', status: 'Coming soon', color: 'from-emerald-500 to-teal-400' },
+                  { name: 'Stripe', desc: 'Sync invoices & payment links in real time.', status: 'Connected', href: '#', color: 'from-violet-600 to-indigo-600' },
+                  { name: 'Supabase', desc: `Live database · ${invoices.length} invoice rows.`, status: 'Connected', href: '#', color: 'from-emerald-600 to-green-500' },
+                  { name: 'QuickBooks', desc: 'Import overdue invoices from your books.', status: qbdConnected ? 'Connected' : 'Connect', href: '/api/auth/quickbooks', color: 'from-green-600 to-lime-500' },
+                  { name: 'WhatsApp', desc: 'Send automated pings over WhatsApp via Twilio.', status: 'Connected', href: '#', color: 'from-emerald-500 to-teal-400' },
                 ].map((it, i) => {
-                  const on = it.status === 'Connected';
                   return (
                     <motion.div
-                      key={it.name} variants={fadeUp} initial="hidden" animate="show" custom={i} whileHover={{ y: -4 }}
+                      key={it.name}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="show"
+                      custom={i}
+                      whileHover={{ y: -4 }}
                       className={`${glass} p-5 flex items-start gap-4`}
                     >
                       <div className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${it.color} flex items-center justify-center shrink-0`}>
@@ -603,18 +635,18 @@ export default function Home() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-bold text-slate-100">{it.name}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                            on ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-white/10'
-                          }`}>
+                          <a
+                            href={it.href}
+                            className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-colors cursor-pointer ${
+                              it.status === 'Connect'
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
+                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                            }`}
+                          >
                             {it.status}
-                          </span>
+                          </a>
                         </div>
                         <p className="text-xs text-slate-400 mt-1">{it.desc}</p>
-                        {!on && (
-                          <button className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-lime-300 transition">
-                            <Plus className="w-3 h-3" /> Notify me
-                          </button>
-                        )}
                       </div>
                     </motion.div>
                   );
