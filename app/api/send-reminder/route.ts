@@ -83,17 +83,27 @@ export async function POST(request: Request) {
       });
     }
 
-    // 6. Send WhatsApp via Twilio
+    // 6. Send WhatsApp via Twilio with debugging
     if (invoice.customer_phone) {
-      const phone = invoice.customer_phone.startsWith('+') 
-        ? invoice.customer_phone 
-        : `+${invoice.customer_phone}`;
+      try {
+        const phone = invoice.customer_phone.startsWith('+') 
+          ? invoice.customer_phone 
+          : `+${invoice.customer_phone}`;
 
-      results.whatsapp = await twilioClient.messages.create({
-        from: process.env.TWILIO_WHATSAPP_NUMBER,
-        to: `whatsapp:${phone}`,
-        body: bodyText,
-      });
+        console.log('Attempting to send WhatsApp to:', phone);
+
+        results.whatsapp = await twilioClient.messages.create({
+          from: process.env.TWILIO_WHATSAPP_NUMBER,
+          to: `whatsapp:${phone}`,
+          body: bodyText,
+        });
+        console.log('WhatsApp sent successfully:', results.whatsapp.sid);
+      } catch (twilioErr: any) {
+        console.error('Twilio Error Details:', twilioErr.message);
+        results.whatsapp_error = twilioErr.message;
+      }
+    } else {
+      console.log('Skipping WhatsApp: No customer_phone found for invoice');
     }
 
     return NextResponse.json({ success: true, results });
