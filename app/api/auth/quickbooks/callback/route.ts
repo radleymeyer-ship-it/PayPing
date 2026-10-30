@@ -16,20 +16,23 @@ export async function GET(request: Request) {
     const token = authResponse.getJson();
     const realmId = oauthClient.getToken().realmId;
 
-    // Optional: Save to Supabase for cron jobs & background syncs
-    /*
+    // Save tokens to Supabase 'integrations' table for background cron jobs
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    await supabase.from('quickbooks_tokens').upsert({
+    const { error: dbError } = await supabase.from('integrations').upsert({
+      provider: 'quickbooks',
       realm_id: realmId,
       access_token: token.access_token,
       refresh_token: token.refresh_token,
       expires_at: new Date(Date.now() + token.expires_in * 1000).toISOString(),
-    });
-    */
+    }, { onConflict: 'realm_id' });
+
+    if (dbError) {
+      console.error('Failed to save QuickBooks integration token to Supabase:', dbError.message);
+    }
 
     // Redirect back to dashboard
     const response = NextResponse.redirect(new URL('/?qbd_connected=true', request.url));

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
-import twilio from 'twilio';
+import { formatCurrency } from '@/lib/currency';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -9,16 +9,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
 export async function POST(request: Request) {
   try {
     const { invoiceId } = await request.json();
 
-    // 1. Fetch the specific invoice
+    // 1. Fetch the specific invoice from Supabase
     const { data: invoice, error: invError } = await supabase
       .from('invoices')
       .select('*')
@@ -59,21 +54,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No active cadence steps found' }, { status: 400 });
     }
 
-    // 4. Dynamic Variable Replacement for Email
+    // 4. Construct the Magic Link Portal URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com';
+    const portalUrl = `${baseUrl}/pay/${invoice.stripe_invoice_id}`;
+
+    // 5. Dynamic Variable Replacement for Email Content
     const renderTemplate = (str: string) =>
       (str || '')
         .replace(/\{\{customer_name\}\}/g, invoice.customer_name || 'Valued Customer')
         .replace(/\{\{invoice_id\}\}/g, invoice.stripe_invoice_id || invoice.id)
-        .replace(/\{\{amount\}\}/g, `$${((invoice.amount_due || invoice.amount || 0) / 100).toFixed(2)}`)
+        .replace(/\{\{amount\}\}/g, formatCurrency(invoice.amount_due, invoice.currency)) // Uses your multi-currency formatter
         .replace(/\{\{due_date\}\}/g, invoice.due_date)
-        .replace(/\{\{payment_link\}\}/g, invoice.payment_link || '#');
+        .replace(/\{\{payment_link\}\}/g, portalUrl); // Points to your secure Magic Link portal
 
     const subject = renderTemplate(step.subject_template);
     const bodyText = renderTemplate(step.message_body);
 
     const results: Record<string, any> = {};
 
-    // 5. Send Email via Resend
+    // 6. Send Email via Resend
     if (invoice.customer_email) {
       results.email = await resend.emails.send({
         from: 'PayPing Reminders <onboarding@resend.dev>',
@@ -81,34 +80,8 @@ export async function POST(request: Request) {
         subject: subject,
         html: `<div style="font-family: sans-serif; white-space: pre-wrap; line-height: 1.5;">${bodyText}</div>`,
       });
-    }
-
-    // 6. Send WhatsApp via Twilio using valid Content SID
-    if (invoice.customer_phone) {
-      try {
-        const phone = invoice.customer_phone.startsWith('+') 
-          ? invoice.customer_phone 
-          : `+${invoice.customer_phone}`;
-
-        console.log('Attempting to send WhatsApp to:', phone);
-
-        results.whatsapp = await twilioClient.messages.create({
-          from: process.env.TWILIO_WHATSAPP_NUMBER,
-          to: `whatsapp:${phone}`,
-          contentSid: 'HX2335605973b06bc9103233aa53d719e8',
-          contentVariables: JSON.stringify({
-            '1': invoice.customer_name || 'Valued Customer',
-            '2': invoice.due_date || 'today'
-          })
-        });
-
-        console.log('WhatsApp sent successfully:', results.whatsapp.sid);
-      } catch (twilioErr: any) {
-        console.error('Twilio Error Details:', twilioErr.message);
-        results.whatsapp_error = twilioErr.message;
-      }
     } else {
-      console.log('Skipping WhatsApp: No customer_phone found for invoice');
+      console.log('Skipping Email: No customer_email found for invoice');
     }
 
     return NextResponse.json({ success: true, results });
