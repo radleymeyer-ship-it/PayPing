@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 6. Send WhatsApp via Twilio with debugging
+    // 6. Send WhatsApp via Twilio using Sandbox Template
     if (invoice.customer_phone) {
       try {
         const phone = invoice.customer_phone.startsWith('+') 
@@ -95,8 +95,14 @@ export async function POST(request: Request) {
         results.whatsapp = await twilioClient.messages.create({
           from: process.env.TWILIO_WHATSAPP_NUMBER,
           to: `whatsapp:${phone}`,
-          body: bodyText,
+          contentSid: 'HXb5b62575e6e4ff6129ad7c8efe1f983e',
+          contentVariables: JSON.stringify({
+            '1': invoice.customer_name || 'Valued Customer',
+            '2': invoice.due_date || 'soon',
+            '3': `$${((invoice.amount_due || invoice.amount || 0) / 100).toFixed(2)}`
+          }),
         });
+
         console.log('WhatsApp sent successfully:', results.whatsapp.sid);
       } catch (twilioErr: any) {
         console.error('Twilio Error Details:', twilioErr.message);
