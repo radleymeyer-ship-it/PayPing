@@ -128,7 +128,7 @@ export default function Home() {
         body: JSON.stringify({
           to: invoice.customer_email,
           customerName: invoice.customer_name,
-          invoiceId: invoice.stripe_invoice_id,
+          invoiceId: invoice.id,
           amount: formatCurrency(invoice.amount_due, invoice.currency || 'usd'),
           dueDate: invoice.due_date,
           paymentUrl: invoice.hosted_invoice_url || 'https://stripe.com',
