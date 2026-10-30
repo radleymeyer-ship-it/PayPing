@@ -74,9 +74,21 @@ export async function POST() {
       }
     }
 
-    return NextResponse.json({ success: true, count: formattedInvoices.length, data: formattedInvoices });
-  } catch (err: any) {
-    console.error('QuickBooks Sync Exception:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+// CLEANUP: Mark invoices that are no longer returned in QuickBooks as 'paid'
+  const activeIds = formattedInvoices.map((inv: any) => inv.stripe_invoice_id);
+  
+  if (activeIds.length > 0) {
+    await supabase
+      .from('invoices')
+      .update({ status: 'paid' })
+      .not('stripe_invoice_id', 'in', `(${activeIds.join(',')})`);
   }
+
+ return NextResponse.json({ success: true, count: formattedInvoices.length, data: formattedInvoices });
+} 
+
+catch (err: any) {
+  console.error('QuickBooks Sync Exception:', err);
+  return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+}
 }
