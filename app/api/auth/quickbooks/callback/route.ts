@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OAuthClient from 'intuit-oauth';
+import { createClient } from '@supabase/supabase-js'; // Ensure you have your supabase client setup
 
 export async function GET(request: Request) {
   const oauthClient = new OAuthClient({
@@ -15,12 +16,49 @@ export async function GET(request: Request) {
     const token = authResponse.getJson();
     const realmId = oauthClient.getToken().realmId;
 
-    // Create the response redirecting back to the dashboard
+    // Optional: Save to Supabase for cron jobs & background syncs
+    /*
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    await supabase.from('quickbooks_tokens').upsert({
+      realm_id: realmId,
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
+      expires_at: new Date(Date.now() + token.expires_in * 1000).toISOString(),
+    });
+    */
+
+    // Redirect back to dashboard
     const response = NextResponse.redirect(new URL('/?qbd_connected=true', request.url));
 
-    // Store tokens and realmId securely in HttpOnly cookies for subsequent sync requests
-    response.cookies.set('qbd_access_token', token.access_token, { httpOnly: true, path: '/' });
-    response.cookies.set('qbd_realm_id', realmId, { httpOnly: true, path: '/' });
+    // Store access_token, refresh_token, and realmId in secure HttpOnly cookies
+    const isProd = process.env.NODE_ENV === 'production';
+
+    response.cookies.set('qbd_access_token', token.access_token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: token.expires_in, // 3600 seconds (1 hour)
+    });
+
+    response.cookies.set('qbd_refresh_token', token.refresh_token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 100 * 24 * 60 * 60, // Refresh tokens last up to 100 days
+    });
+
+    response.cookies.set('qbd_realm_id', realmId, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+    });
 
     return response;
   } catch (error: any) {

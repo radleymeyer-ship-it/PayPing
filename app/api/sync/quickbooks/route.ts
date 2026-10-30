@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { getValidAccessToken } from '@/lib/quickbooks';
 
 export async function POST() {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('qbd_access_token')?.value;
-    const realmId = cookieStore.get('qbd_realm_id')?.value;
+    
+    const { accessToken, realmId } = await getValidAccessToken();
 
     console.log("=== QUICKBOOKS SYNC DEBUG ===");
     console.log("Access Token:", accessToken ? "FOUND" : "MISSING");
