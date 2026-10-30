@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No active cadence steps found' }, { status: 400 });
     }
 
-    // 4. Dynamic Variable Replacement
+    // 4. Dynamic Variable Replacement for Email
     const renderTemplate = (str: string) =>
       (str || '')
         .replace(/\{\{customer_name\}\}/g, invoice.customer_name || 'Valued Customer')
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 6. Send WhatsApp via Twilio (Direct Text)
+    // 6. Send WhatsApp via Twilio using valid Content SID
     if (invoice.customer_phone) {
       try {
         const phone = invoice.customer_phone.startsWith('+') 
@@ -95,7 +95,11 @@ export async function POST(request: Request) {
         results.whatsapp = await twilioClient.messages.create({
           from: process.env.TWILIO_WHATSAPP_NUMBER,
           to: `whatsapp:${phone}`,
-          body: bodyText,
+          contentSid: 'HX2335605973b06bc9103233aa53d719e8',
+          contentVariables: JSON.stringify({
+            '1': invoice.customer_name || 'Valued Customer',
+            '2': invoice.due_date || 'today'
+          })
         });
 
         console.log('WhatsApp sent successfully:', results.whatsapp.sid);
