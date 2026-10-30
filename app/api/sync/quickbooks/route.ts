@@ -19,7 +19,7 @@ export async function POST() {
     }
 
     // Query invoices from Intuit Sandbox
-    const query = encodeURIComponent("select * from Invoice MAXRESULTS 10");
+    const query = encodeURIComponent("SELECT * FROM Invoice WHERE Balance > '0'");
     const qbUrl = `https://sandbox-quickbooks.api.intuit.com/v3/company/${realmId}/query?query=${query}`;
 
     const qbRes = await fetch(qbUrl, {
