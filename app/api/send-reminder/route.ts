@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import twilio from 'twilio';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
 );
 
 export async function POST(request: Request) {
@@ -37,7 +43,6 @@ export async function POST(request: Request) {
       .eq('is_active', true)
       .single();
 
-    // If no exact day match, grab the first active step as fallback
     if (!step) {
       const { data: firstStep } = await supabase
         .from('cadence_steps')
@@ -56,7 +61,7 @@ export async function POST(request: Request) {
 
     // 4. Dynamic Variable Replacement
     const renderTemplate = (str: string) =>
-      str
+      (str || '')
         .replace(/\{\{customer_name\}\}/g, invoice.customer_name || 'Valued Customer')
         .replace(/\{\{invoice_id\}\}/g, invoice.stripe_invoice_id || invoice.id)
         .replace(/\{\{amount\}\}/g, `$${((invoice.amount_due || invoice.amount || 0) / 100).toFixed(2)}`)
@@ -66,15 +71,32 @@ export async function POST(request: Request) {
     const subject = renderTemplate(step.subject_template);
     const bodyText = renderTemplate(step.message_body);
 
-    // 5. Send via Resend
-    const emailRes = await resend.emails.send({
-      from: 'PayPing Reminders <onboarding@resend.dev>', // Replace with your verified domain
-      to: invoice.customer_email,
-      subject: subject,
-      html: `<div style="font-family: sans-serif; white-space: pre-wrap; line-height: 1.5;">${bodyText}</div>`,
-    });
+    const results: Record<string, any> = {};
 
-    return NextResponse.json({ success: true, emailRes });
+    // 5. Send Email via Resend
+    if (invoice.customer_email) {
+      results.email = await resend.emails.send({
+        from: 'PayPing Reminders <onboarding@resend.dev>',
+        to: invoice.customer_email,
+        subject: subject,
+        html: `<div style="font-family: sans-serif; white-space: pre-wrap; line-height: 1.5;">${bodyText}</div>`,
+      });
+    }
+
+    // 6. Send WhatsApp via Twilio
+    if (invoice.customer_phone) {
+      const phone = invoice.customer_phone.startsWith('+') 
+        ? invoice.customer_phone 
+        : `+${invoice.customer_phone}`;
+
+      results.whatsapp = await twilioClient.messages.create({
+        from: process.env.TWILIO_WHATSAPP_NUMBER,
+        to: `whatsapp:${phone}`,
+        body: bodyText,
+      });
+    }
+
+    return NextResponse.json({ success: true, results });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
