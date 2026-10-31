@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import OAuthClient from 'intuit-oauth';
 import { createClient } from '@supabase/supabase-js';
 
+export const instant = false;
+
 export async function GET(request: Request) {
   // Access request.url outside the try/catch so Next.js cleanly recognizes the dynamic request
   const parseUri = request.url;
