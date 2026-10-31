@@ -185,7 +185,7 @@ export default function Home() {
 
   const activeOverdueCents = invoices
     .filter((inv) => inv.status === 'unpaid')
-    .reduce((acc, inv) => acc + Number(inv.amount_due || 0), 0);
+    .reduce((acc, inv) => acc + inv.amount_due, 0);
 
   const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
   const currencies = useMemo(
