@@ -179,9 +179,13 @@ export default function Home() {
 
   // Calculate live stats
 
+  const totalRecoveredCents = invoices
+    .filter((inv) => inv.status === 'paid')
+    .reduce((acc, inv) => acc + Number(inv.amount_due || 0), 0);
+
   const activeOverdueCents = invoices
     .filter((inv) => inv.status === 'unpaid')
-    .reduce((acc, inv) => acc + inv.amount_due, 0);
+    .reduce((acc, inv) => acc + Number(inv.amount_due || 0), 0);
 
   const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
   const currencies = useMemo(
@@ -192,54 +196,7 @@ export default function Home() {
     ? Math.round((invoices.filter((i) => i.status === 'paid').length / invoices.length) * 100)
     : 0;
 
-    // --- Calculate Advanced Financial Metrics & Live Stats ---
-const now = new Date();
-const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-const totalRecoveredCents = invoices
-  .filter((inv: any) => inv.status === 'paid')
-  .reduce((acc: number, inv: any) => acc + Number(inv.amount_due || 0), 0);
-
-// 1. Days Sales Outstanding (DSO)
-const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid' && inv.created_at && inv.updated_at);
-const totalDaysToPay = paidInvoices.reduce((acc: number, inv: any) => {
-  const created = new Date(inv.created_at).getTime();
-  const paid = new Date(inv.updated_at).getTime();
-  const days = Math.max(0, (paid - created) / (1000 * 60 * 60 * 24));
-  return acc + days;
-}, 0);
-const averageDSO = paidInvoices.length > 0 ? Math.round(totalDaysToPay / paidInvoices.length) : 0;
-
-// 2. Projected 30-Day Cash Flow
-const projectedCashFlow = invoices
-  .filter((inv: any) => inv.status === 'unpaid' && inv.due_date)
-  .reduce((acc: number, inv: any) => {
-    const dueDate = new Date(inv.due_date);
-    if (dueDate >= now && dueDate <= thirtyDaysFromNow) {
-      return acc + Number(inv.amount_due || 0);
-    }
-    return acc;
-  }, 0);
-
-// 3. Aging Buckets Breakdown (Current, 1-30 days overdue, 30+ days overdue)
-let currentDue = 0;
-let overdue1to30 = 0;
-let overdue30Plus = 0;
-
-invoices.filter((inv: any) => inv.status === 'unpaid').forEach((inv: any) => {
-  const amount = Number(inv.amount_due || 0);
-  if (!inv.due_date) {
-    currentDue += amount;
-    return;
-  }
-  const dueDate = new Date(inv.due_date);
-  const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays <= 0) currentDue += amount;
-  else if (diffDays <= 30) overdue1to30 += amount;
-  else overdue30Plus += amount;
-});
-
+  
   // Simulated live dispatch feed (cycles through unpaid invoices)
   const [feed, setFeed] = useState<{ key: number; text: string }[]>([]);
   const [target, setTarget] = useState<string>('Standing by…');
