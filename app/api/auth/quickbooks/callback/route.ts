@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import OAuthClient from 'intuit-oauth';
 import { createClient } from '@supabase/supabase-js';
 
-export const instant = false;
-
 export async function GET(request: Request) {
+  // Access request.url outside the try/catch so Next.js cleanly recognizes the dynamic request
+  const parseUri = request.url;
+
   const oauthClient = new OAuthClient({
     clientId: process.env.INTUIT_CLIENT_ID!,
     clientSecret: process.env.INTUIT_CLIENT_SECRET!,
@@ -13,12 +14,10 @@ export async function GET(request: Request) {
   });
 
   try {
-    const parseUri = request.url;
     const authResponse = await oauthClient.createToken(parseUri);
     const token = authResponse.getJson();
     const realmId = oauthClient.getToken().realmId;
 
-    // Save tokens to Supabase 'integrations' table for background cron jobs
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -36,10 +35,7 @@ export async function GET(request: Request) {
       console.error('Failed to save QuickBooks integration token to Supabase:', dbError.message);
     }
 
-    // Redirect back to dashboard
     const response = NextResponse.redirect(new URL('/?qbd_connected=true', request.url));
-
-    // Store access_token, refresh_token, and realmId in secure HttpOnly cookies
     const isProd = process.env.NODE_ENV === 'production';
 
     response.cookies.set('qbd_access_token', token.access_token, {
