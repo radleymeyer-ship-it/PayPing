@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server';
 import OAuthClient from 'intuit-oauth';
 import { createClient } from '@supabase/supabase-js';
 
-export const dynamic = 'force-dynamic'; // <--- Add this line
-
-  // ... rest of your code
 export async function GET(request: Request) {
   const oauthClient = new OAuthClient({
     clientId: process.env.INTUIT_CLIENT_ID!,
@@ -48,7 +45,7 @@ export async function GET(request: Request) {
       secure: isProd,
       sameSite: 'lax',
       path: '/',
-      maxAge: token.expires_in, // 3600 seconds (1 hour)
+      maxAge: token.expires_in,
     });
 
     response.cookies.set('qbd_refresh_token', token.refresh_token, {
@@ -56,7 +53,7 @@ export async function GET(request: Request) {
       secure: isProd,
       sameSite: 'lax',
       path: '/',
-      maxAge: 100 * 24 * 60 * 60, // Refresh tokens last up to 100 days
+      maxAge: 100 * 24 * 60 * 60,
     });
 
     response.cookies.set('qbd_realm_id', realmId, {
