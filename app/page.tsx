@@ -59,7 +59,16 @@ export default function Home() {
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<{ id: string; success: boolean; message: string } | null>(null);
-  
+  const [metrics, setMetrics] = useState({
+  totalRecovered: 0,
+  activeOverdue: 0,
+  averageDSO: 0,
+  projectedCashFlow: 0,
+  currentDue: 0,
+  overdue1to30: 0,
+  overdue30Plus: 0,
+});
+
   // QuickBooks Connection State Check
   const [qbdConnected, setQbdConnected] = useState<boolean>(false);
 
