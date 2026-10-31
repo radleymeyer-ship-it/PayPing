@@ -1,6 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
-import { formatCurrency } from '@/lib/currency';
+
+export const instant = false; // <--- Required in Next.js 16 to allow dynamic runtime rendering
+
+function formatCurrency(amount: number, currency: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: currency || 'USD',
+  }).format(amount);
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,11 +22,11 @@ interface PageProps {
 export default async function ClientPaymentPortal({ params }: PageProps) {
   const { token } = await params;
 
-  // Fetch invoice by stripe_invoice_id or a unique magic token
+  // Fetch invoice using the secure magic link token
   const { data: invoice, error } = await supabase
     .from('invoices')
     .select('*')
-    .eq('stripe_invoice_id', token)
+    .eq('magic_link_token', token)
     .single();
 
   if (error || !invoice) {
@@ -45,12 +53,14 @@ export default async function ClientPaymentPortal({ params }: PageProps) {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Due Date</span>
-            <span className="font-medium text-gray-900">{new Date(invoice.due_date).toLocaleDateString()}</span>
+            <span className="font-medium text-gray-900">
+              {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}
+            </span>
           </div>
           <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
             <span className="font-semibold text-gray-700">Amount Due</span>
             <span className="text-2xl font-extrabold text-indigo-600">
-              {formatCurrency(invoice.amount_due, invoice.currency)}
+              {formatCurrency(Number(invoice.amount_due || 0), invoice.currency)}
             </span>
           </div>
         </div>
