@@ -111,13 +111,25 @@ export default function Home() {
     if (!error && data) {
       setInvoices(data);
 
-      // --- Compute Financial Aging Metrics ---
+      // --- Compute Advanced Financial Metrics & Live Stats ---
       const now = new Date();
+      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
       let collected = 0;
       let outstanding = 0;
       let current = 0;
       let overdue30 = 0;
       let overduePlus = 0;
+      let cashFlow = 0;
+
+      // 1. Days Sales Outstanding (DSO)
+      const paidInvoices = data.filter((inv: any) => inv.status === 'paid' && inv.created_at && inv.updated_at);
+      const totalDaysToPay = paidInvoices.reduce((acc: number, inv: any) => {
+        const created = new Date(inv.created_at).getTime();
+        const paid = new Date(inv.updated_at).getTime();
+        return acc + Math.max(0, (paid - created) / (1000 * 60 * 60 * 24));
+      }, 0);
+      const averageDSO = paidInvoices.length > 0 ? Math.round(totalDaysToPay / paidInvoices.length) : 0;
 
       data.forEach((inv: any) => {
         const amount = Number(inv.amount_due || 0);
@@ -125,22 +137,37 @@ export default function Home() {
           collected += amount;
         } else {
           outstanding += amount;
-          if (!inv.due_date) {
-            current += amount;
-            return;
-          }
-          const dueDate = new Date(inv.due_date);
-          const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (diffDays <= 0) current += amount;
-          else if (diffDays <= 30) overdue30 += amount;
-          else overduePlus += amount;
+          // Projected 30-day cash flow
+          if (inv.due_date) {
+            const dueDate = new Date(inv.due_date);
+            if (dueDate >= now && dueDate <= thirtyDaysFromNow) {
+              cashFlow += amount;
+            }
+
+            const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 0) current += amount;
+            else if (diffDays <= 30) overdue30 += amount;
+            else overduePlus += amount;
+          } else {
+            current += amount;
+          }
         }
+      });
+
+      // Save everything to metrics state
+      setMetrics({
+        totalRecovered: collected,
+        activeOverdue: outstanding,
+        averageDSO,
+        projectedCashFlow: cashFlow,
+        currentDue: current,
+        overdue1to30: overdue30,
+        overdue30Plus: overduePlus,
       });
     }
     setLoading(false);
   };
-
   useEffect(() => {
     fetchInvoices();
   }, []);
