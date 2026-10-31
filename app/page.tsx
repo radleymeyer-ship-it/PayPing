@@ -1,5 +1,7 @@
 'use client';
 
+export const instant = false;
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -9,7 +11,6 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
 
-export const instant = false;
 
 type Tab = 'dashboard' | 'invoices' | 'sequence' | 'integrations';
 
