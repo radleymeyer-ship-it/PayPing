@@ -9,8 +9,6 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
 
-export const instant = false;
-
 type Tab = 'dashboard' | 'invoices' | 'sequence' | 'integrations';
 
 /* ---------- Robot logo (uses /paypring-robot.png from /public) ---------- */
