@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import OAuthClient from 'intuit-oauth';
 import { createClient } from '@supabase/supabase-js';
 
+export const instant = false;
+
 export async function GET(request: Request) {
   const oauthClient = new OAuthClient({
     clientId: process.env.INTUIT_CLIENT_ID!,
