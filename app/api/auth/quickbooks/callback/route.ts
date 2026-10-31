@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import OAuthClient from 'intuit-oauth';
-import { createClient } from '@supabase/supabase-js'; // Ensure you have your supabase client setup
+import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic'; // <--- Add this line
+
+  // ... rest of your code
 export async function GET(request: Request) {
   const oauthClient = new OAuthClient({
     clientId: process.env.INTUIT_CLIENT_ID!,
