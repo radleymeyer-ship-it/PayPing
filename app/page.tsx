@@ -326,21 +326,31 @@ export default function Home() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    {
-                      label: 'Total Recovered', value: formatCurrency(totalRecoveredCents, invoices[0]?.currency || 'usd'),
-                      color: 'text-emerald-400', glow: 'from-emerald-500/20',
-                      badge: `${recoveryRate}% recovery rate`, up: true,
-                    },
-                    {
-                      label: 'Active Overdue', value: formatCurrency(activeOverdueCents, invoices[0]?.currency || 'usd'),
-                      color: 'text-amber-400', glow: 'from-amber-500/20',
-                      badge: `${unpaid.length} unpaid`, up: false,
-                    },
-                    {
-                      label: 'Currencies', value: currencies.length ? currencies.join(' · ') : '—',
-                      color: 'text-sky-400', glow: 'from-sky-500/20',
-                      badge: `${invoices.length} rows synced`, up: true, globe: true,
-                    },
+  {
+    label: 'Total Recovered',
+    value: formatCurrency(metrics.totalRecovered, invoices[0]?.currency || 'usd'),
+    color: 'text-emerald-400',
+    glow: 'from-emerald-500/20',
+    badge: `${metrics.averageDSO}d avg DSO`,
+    up: true,
+  },
+  {
+    label: 'Active Overdue',
+    value: formatCurrency(metrics.activeOverdue, invoices[0]?.currency || 'usd'),
+    color: 'text-amber-400',
+    glow: 'from-amber-500/20',
+    badge: `${formatCurrency(metrics.projectedCashFlow, invoices[0]?.currency || 'usd')} 30d proj`,
+    up: false,
+  },
+  {
+    label: 'Currencies',
+    value: currencies.length ? currencies.join(' · ') : '-',
+    color: 'text-sky-400',
+    glow: 'from-sky-500/20',
+    badge: `${invoices.length} rows synced`,
+    up: true,
+    globe: true,
+  },
                   ].map((c, i) => (
                     <motion.div
                       key={c.label} variants={fadeUp} initial="hidden" animate="show" custom={i}
