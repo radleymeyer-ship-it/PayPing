@@ -212,26 +212,64 @@ export default function Home() {
       setSendingId(null);
     }
   };
+const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
+const currencies = useMemo(
+  () => Array.from(new Set(invoices.map((i) => (i.currency || 'usd').toUpperCase()))),
+  [invoices]
+);
+  // --- Compute Financial Aging & Metrics Automatically on Data Change ---
+useEffect(() => {
+  if (!invoices || invoices.length === 0) return;
 
-  // Calculate live stats
+  const now = new Date();
+  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const totalRecoveredCents = invoices
-    .filter((inv) => inv.status === 'paid')
-    .reduce((acc, inv) => acc + Number(inv.amount_due || 0), 0);
+  let collected = 0;
+  let outstanding = 0;
+  let current = 0;
+  let overdue30 = 0;
+  let overduePlus = 0;
+  let cashFlow = 0;
 
-  const activeOverdueCents = invoices
-    .filter((inv) => inv.status === 'unpaid')
-    .reduce((acc, inv) => acc + inv.amount_due, 0);
+  const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid' && inv.created_at && inv.updated_at);
+  const totalDaysToPay = paidInvoices.reduce((acc: number, inv: any) => {
+    const created = new Date(inv.created_at).getTime();
+    const paid = new Date(inv.updated_at).getTime();
+    return acc + Math.max(0, (paid - created) / (1000 * 60 * 60 * 24));
+  }, 0);
+  const averageDSO = paidInvoices.length > 0 ? Math.round(totalDaysToPay / paidInvoices.length) : 0;
 
-  const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
-  const currencies = useMemo(
-    () => Array.from(new Set(invoices.map((i) => (i.currency || 'usd').toUpperCase()))),
-    [invoices]
-  );
-  const recoveryRate = invoices.length
-    ? Math.round((invoices.filter((i) => i.status === 'paid').length / invoices.length) * 100)
-    : 0;
+  invoices.forEach((inv: any) => {
+    const amount = Number(inv.amount_due || 0);
+    if (inv.status === 'paid') {
+      collected += amount;
+    } else {
+      outstanding += amount;
+      if (inv.due_date) {
+        const dueDate = new Date(inv.due_date);
+        if (dueDate >= now && dueDate <= thirtyDaysFromNow) {
+          cashFlow += amount;
+        }
+        const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 0) current += amount;
+        else if (diffDays <= 30) overdue30 += amount;
+        else overduePlus += amount;
+      } else {
+        current += amount;
+      }
+    }
+  });
 
+  setMetrics({
+    totalRecovered: collected,
+    activeOverdue: outstanding,
+    averageDSO,
+    projectedCashFlow: cashFlow,
+    currentDue: current,
+    overdue1to30: overdue30,
+    overdue30Plus: overduePlus,
+  });
+}, [invoices]);
   
   // Simulated live dispatch feed (cycles through unpaid invoices)
   const [feed, setFeed] = useState<{ key: number; text: string }[]>([]);
