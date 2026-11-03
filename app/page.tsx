@@ -22,21 +22,23 @@ function RobotLogo({ size = 44 }: { size?: number }) {
       animate={{ y: [0, -3, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
     >
-      <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-tr from-blue-500 to-lime-400 opacity-60 blur-md animate-pulse" />
-      {failed ? (
-        <div className="relative w-full h-full rounded-xl bg-gradient-to-tr from-blue-700 to-lime-500 flex items-center justify-center">
-          <Bot className="w-6 h-6 text-white" />
-        </div>
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/paypring-robot.png"
-          alt="PayPing robot"
-          ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setFailed(true); }}
-          onError={() => setFailed(true)}
-          className="relative w-full h-full rounded-xl object-cover ring-1 ring-white/20"
-        />
-      )}
+      {/* Subtler background glow */}
+    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-lime-400/20 blur-sm animate-pulse" />
+    
+    {failed ? (
+      <div className="relative w-full h-full rounded-xl bg-gradient-to-tr from-blue-700 to-lime-500 flex items-center justify-center">
+        <Bot className="w-6 h-6 text-white" />
+      </div>
+    ) : (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src="/InvoicePilot-robot.png"
+        alt="Invoice Pilot robot"
+        ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setFailed(true); }}
+        onError={() => setFailed(true)}
+        className="relative z-10 w-full h-full object-contain"
+      />
+    )}
       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-lime-400 ring-2 ring-slate-950 animate-ping" />
       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-lime-400 ring-2 ring-slate-950" />
     </motion.div>
@@ -313,18 +315,17 @@ useEffect(() => {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-6 py-4 flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <RobotLogo />
-          <div className="leading-tight">
-            <span className="text-2xl font-extrabold tracking-tight">
-              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Pay</span>
-              <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Ping</span>
-            </span>
-            <div className="text-[10px] uppercase tracking-widest text-slate-500">Your invoice reminder bot</div>
-          </div>
-        </div>
-
+<header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-6 py-4 flex flex-wrap gap-4 items-center justify-between">
+  <div className="flex items-center space-x-3">
+    <RobotLogo size={44} />
+    <div className="leading-tight">
+      <span className="text-2xl font-extrabold tracking-tight">
+        <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Invoice</span>
+        <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Pilot</span>
+      </span>
+      <div className="text-[10px] uppercase tracking-widest text-slate-500">Integrates with QuickBooks</div>
+    </div>
+  </div>
         <nav className="flex space-x-1 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
           {tabs.map((tab) => (
             <button
