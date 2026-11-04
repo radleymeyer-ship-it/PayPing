@@ -9,7 +9,6 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
 
-
 type Tab = 'dashboard' | 'invoices' | 'sequence' | 'integrations';
 
 /* ---------- Robot logo (uses /paypring-robot.png from /public) ---------- */
@@ -22,23 +21,21 @@ function RobotLogo({ size = 44 }: { size?: number }) {
       animate={{ y: [0, -3, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
     >
-      {/* Subtler background glow */}
-    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-lime-400/20 blur-sm animate-pulse" />
-    
-    {failed ? (
-      <div className="relative w-full h-full rounded-xl bg-gradient-to-tr from-blue-700 to-lime-500 flex items-center justify-center">
-        <Bot className="w-6 h-6 text-white" />
-      </div>
-    ) : (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src="/InvoicePilot-robot.png"
-        alt="Invoice Pilot robot"
-        ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setFailed(true); }}
-        onError={() => setFailed(true)}
-        className="relative z-10 w-full h-full object-contain"
-      />
-    )}
+      <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-tr from-blue-500 to-lime-400 opacity-60 blur-md animate-pulse" />
+      {failed ? (
+        <div className="relative w-full h-full rounded-xl bg-gradient-to-tr from-blue-700 to-lime-500 flex items-center justify-center">
+          <Bot className="w-6 h-6 text-white" />
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/InvoicePilot-robot.png"
+          alt="InvoicePilot robot"
+          ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setFailed(true); }}
+          onError={() => setFailed(true)}
+          className="relative w-full h-full rounded-xl object-cover ring-1 ring-white/20"
+        />
+      )}
       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-lime-400 ring-2 ring-slate-950 animate-ping" />
       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-lime-400 ring-2 ring-slate-950" />
     </motion.div>
@@ -61,27 +58,6 @@ export default function Home() {
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<{ id: string; success: boolean; message: string } | null>(null);
-  const [metrics, setMetrics] = useState({
-  totalRecovered: 0,
-  activeOverdue: 0,
-  averageDSO: 0,
-  projectedCashFlow: 0,
-  currentDue: 0,
-  overdue1to30: 0,
-  overdue30Plus: 0,
-});
-
-  // QuickBooks Connection State Check
-  const [qbdConnected, setQbdConnected] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('qbd_connected') === 'true') {
-        setQbdConnected(true);
-      }
-    }
-  }, []);
 
   // Sequence Configuration State
   const [sequences, setSequences] = useState([
@@ -112,64 +88,10 @@ export default function Home() {
 
     if (!error && data) {
       setInvoices(data);
-
-      // --- Compute Advanced Financial Metrics & Live Stats ---
-      const now = new Date();
-      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-      let collected = 0;
-      let outstanding = 0;
-      let current = 0;
-      let overdue30 = 0;
-      let overduePlus = 0;
-      let cashFlow = 0;
-
-      // 1. Days Sales Outstanding (DSO)
-      const paidInvoices = data.filter((inv: any) => inv.status === 'paid' && inv.created_at && inv.updated_at);
-      const totalDaysToPay = paidInvoices.reduce((acc: number, inv: any) => {
-        const created = new Date(inv.created_at).getTime();
-        const paid = new Date(inv.updated_at).getTime();
-        return acc + Math.max(0, (paid - created) / (1000 * 60 * 60 * 24));
-      }, 0);
-      const averageDSO = paidInvoices.length > 0 ? Math.round(totalDaysToPay / paidInvoices.length) : 0;
-
-      data.forEach((inv: any) => {
-        const amount = Number(inv.amount_due || 0);
-        if (inv.status === 'paid') {
-          collected += amount;
-        } else {
-          outstanding += amount;
-
-          // Projected 30-day cash flow
-          if (inv.due_date) {
-            const dueDate = new Date(inv.due_date);
-            if (dueDate >= now && dueDate <= thirtyDaysFromNow) {
-              cashFlow += amount;
-            }
-
-            const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays <= 0) current += amount;
-            else if (diffDays <= 30) overdue30 += amount;
-            else overduePlus += amount;
-          } else {
-            current += amount;
-          }
-        }
-      });
-
-      // Save everything to metrics state
-      setMetrics({
-        totalRecovered: collected,
-        activeOverdue: outstanding,
-        averageDSO,
-        projectedCashFlow: cashFlow,
-        currentDue: current,
-        overdue1to30: overdue30,
-        overdue30Plus: overduePlus,
-      });
     }
     setLoading(false);
   };
+
   useEffect(() => {
     fetchInvoices();
   }, []);
@@ -194,7 +116,7 @@ export default function Home() {
         body: JSON.stringify({
           to: invoice.customer_email,
           customerName: invoice.customer_name,
-          invoiceId: invoice.id,
+          invoiceId: invoice.stripe_invoice_id,
           amount: formatCurrency(invoice.amount_due, invoice.currency || 'usd'),
           dueDate: invoice.due_date,
           paymentUrl: invoice.hosted_invoice_url || 'https://stripe.com',
@@ -214,65 +136,25 @@ export default function Home() {
       setSendingId(null);
     }
   };
-const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
-const currencies = useMemo(
-  () => Array.from(new Set(invoices.map((i) => (i.currency || 'usd').toUpperCase()))),
-  [invoices]
-);
-  // --- Compute Financial Aging & Metrics Automatically on Data Change ---
-useEffect(() => {
-  if (!invoices || invoices.length === 0) return;
 
-  const now = new Date();
-  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // Calculate live stats
+  const totalRecoveredCents = invoices
+    .filter((inv) => inv.status === 'paid')
+    .reduce((acc, inv) => acc + inv.amount_due, 0);
 
-  let collected = 0;
-  let outstanding = 0;
-  let current = 0;
-  let overdue30 = 0;
-  let overduePlus = 0;
-  let cashFlow = 0;
+  const activeOverdueCents = invoices
+    .filter((inv) => inv.status === 'unpaid')
+    .reduce((acc, inv) => acc + inv.amount_due, 0);
 
-  const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid' && inv.created_at && inv.updated_at);
-  const totalDaysToPay = paidInvoices.reduce((acc: number, inv: any) => {
-    const created = new Date(inv.created_at).getTime();
-    const paid = new Date(inv.updated_at).getTime();
-    return acc + Math.max(0, (paid - created) / (1000 * 60 * 60 * 24));
-  }, 0);
-  const averageDSO = paidInvoices.length > 0 ? Math.round(totalDaysToPay / paidInvoices.length) : 0;
+  const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
+  const currencies = useMemo(
+    () => Array.from(new Set(invoices.map((i) => (i.currency || 'usd').toUpperCase()))),
+    [invoices]
+  );
+  const recoveryRate = invoices.length
+    ? Math.round((invoices.filter((i) => i.status === 'paid').length / invoices.length) * 100)
+    : 0;
 
-  invoices.forEach((inv: any) => {
-    const amount = Number(inv.amount_due || 0);
-    if (inv.status === 'paid') {
-      collected += amount;
-    } else {
-      outstanding += amount;
-      if (inv.due_date) {
-        const dueDate = new Date(inv.due_date);
-        if (dueDate >= now && dueDate <= thirtyDaysFromNow) {
-          cashFlow += amount;
-        }
-        const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 0) current += amount;
-        else if (diffDays <= 30) overdue30 += amount;
-        else overduePlus += amount;
-      } else {
-        current += amount;
-      }
-    }
-  });
-
-  setMetrics({
-    totalRecovered: collected,
-    activeOverdue: outstanding,
-    averageDSO,
-    projectedCashFlow: cashFlow,
-    currentDue: current,
-    overdue1to30: overdue30,
-    overdue30Plus: overduePlus,
-  });
-}, [invoices]);
-  
   // Simulated live dispatch feed (cycles through unpaid invoices)
   const [feed, setFeed] = useState<{ key: number; text: string }[]>([]);
   const [target, setTarget] = useState<string>('Standing by…');
@@ -315,23 +197,26 @@ useEffect(() => {
       </div>
 
       {/* Header */}
-<header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-6 py-4 flex flex-wrap gap-4 items-center justify-between">
-  <div className="flex items-center space-x-3">
-    <RobotLogo size={44} />
-    <div className="leading-tight">
-      <span className="text-2xl font-extrabold tracking-tight">
-        <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Invoice</span>
-        <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Pilot</span>
-      </span>
-      <div className="text-[10px] uppercase tracking-widest text-slate-500">Integrates with QuickBooks</div>
-    </div>
-  </div>
+      <header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-6 py-4 flex flex-wrap gap-4 items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <RobotLogo />
+          <div className="leading-tight">
+            <span className="text-[32px] font-extrabold tracking-tight">
+              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Pay</span>
+              <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Ping</span>
+            </span>
+            <div className="text-[13px] uppercase tracking-widest text-slate-500">Your invoice reminder bot</div>
+          </div>
+        </div>
+
         <nav className="flex space-x-1 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={'relative px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ' + (activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white')}
+              className={`relative px-4 py-2 rounded-lg text-[15px] font-semibold flex items-center space-x-2 transition ${
+                activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white'
+              }`}
             >
               {activeTab === tab.id && (
                 <motion.span
@@ -350,32 +235,14 @@ useEffect(() => {
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-slate-100">{titles[activeTab]}</h1>
+          <h1 className="text-[32px] font-bold text-slate-100">{titles[activeTab]}</h1>
           <button
-  onClick={async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/sync/quickbooks', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        alert(`Successfully synced ${data.count} invoices from QuickBooks!`);
-        fetchInvoices(); // Refresh the table list
-      } else {
-        alert('Sync failed: ' + (data.error || 'Unknown error'));
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Sync error occurred.');
-    } finally {
-      setLoading(false);
-    }
-  }}
-  disabled={loading}
-  className="flex items-center space-x-1.5 text-xs bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition"
->
-  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-  <span>{loading ? 'Syncing...' : 'Sync Live DB'}</span>
-</button>
+            onClick={fetchInvoices}
+            className="flex items-center space-x-1.5 text-[15px] bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:border-blue-500/50 hover:bg-slate-800 text-slate-300 transition"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync Live DB</span>
+          </button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -392,31 +259,21 @@ useEffect(() => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-  {
-    label: 'Total Recovered',
-    value: formatCurrency(metrics.totalRecovered, invoices[0]?.currency || 'usd'),
-    color: 'text-emerald-400',
-    glow: 'from-emerald-500/20',
-    badge: `${metrics.averageDSO}d avg DSO`,
-    up: true,
-  },
-  {
-    label: 'Active Overdue',
-    value: formatCurrency(metrics.activeOverdue, invoices[0]?.currency || 'usd'),
-    color: 'text-amber-400',
-    glow: 'from-amber-500/20',
-    badge: `${formatCurrency(metrics.projectedCashFlow, invoices[0]?.currency || 'usd')} 30d proj`,
-    up: false,
-  },
-  {
-    label: 'Currencies',
-    value: currencies.length ? currencies.join(' · ') : '-',
-    color: 'text-sky-400',
-    glow: 'from-sky-500/20',
-    badge: `${invoices.length} rows synced`,
-    up: true,
-    globe: true,
-  },
+                    {
+                      label: 'Total Recovered', value: formatCurrency(totalRecoveredCents, invoices[0]?.currency || 'usd'),
+                      color: 'text-emerald-400', glow: 'from-emerald-500/20',
+                      badge: `${recoveryRate}% recovery rate`, up: true,
+                    },
+                    {
+                      label: 'Active Overdue', value: formatCurrency(activeOverdueCents, invoices[0]?.currency || 'usd'),
+                      color: 'text-amber-400', glow: 'from-amber-500/20',
+                      badge: `${unpaid.length} unpaid`, up: false,
+                    },
+                    {
+                      label: 'Currencies', value: currencies.length ? currencies.join(' · ') : '—',
+                      color: 'text-sky-400', glow: 'from-sky-500/20',
+                      badge: `${invoices.length} rows synced`, up: true, globe: true,
+                    },
                   ].map((c, i) => (
                     <motion.div
                       key={c.label} variants={fadeUp} initial="hidden" animate="show" custom={i}
@@ -425,15 +282,15 @@ useEffect(() => {
                     >
                       <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-2xl`} />
                       <div className="relative flex items-center justify-between">
-                        <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{c.label}</span>
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        <span className="text-[14px] text-slate-400 uppercase tracking-wider font-semibold">{c.label}</span>
+                        <span className={`inline-flex items-center gap-1 text-[13px] font-bold px-2 py-0.5 rounded-full border ${
                           c.up ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                         }`}>
                           {c.globe ? <Globe2 className="w-3 h-3" /> : c.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                           {c.badge}
                         </span>
                       </div>
-                      <div className={`relative text-3xl font-extrabold tracking-tight mt-3 ${c.color}`}>{c.value}</div>
+                      <div className={`relative text-[40px] font-extrabold tracking-tight mt-3 ${c.color}`}>{c.value}</div>
                     </motion.div>
                   ))}
                 </div>
@@ -485,16 +342,16 @@ useEffect(() => {
                   <div className="space-y-4 min-w-0">
                     <div className="flex items-center gap-2">
                       <Radar className="w-4 h-4 text-lime-400" />
-                      <h2 className="text-sm font-bold text-slate-100">AI Bot Dispatch Status</h2>
-                      <span className="ml-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-lime-300 bg-lime-400/10 border border-lime-400/20 px-2 py-0.5 rounded-full">
+                      <h2 className="text-[17px] font-bold text-slate-100">AI Bot Dispatch Status</h2>
+                      <span className="ml-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-lime-300 bg-lime-400/10 border border-lime-400/20 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" /> ONLINE
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-[15px] text-slate-400">
                       Scanning for overdue invoices · currently targeting{' '}
                       <span className="text-lime-300 font-semibold">{target}</span>
                     </div>
-                    <div className="space-y-2 h-[10.5rem] overflow-hidden">
+                    <div className="space-y-2 min-h-[7.5rem]">
                       <AnimatePresence initial={false}>
                         {feed.map((f, i) => (
                           <motion.div
@@ -503,7 +360,7 @@ useEffect(() => {
                             initial={{ opacity: 0, x: -16 }}
                             animate={{ opacity: 1 - i * 0.2, x: 0 }}
                             exit={{ opacity: 0 }}
-                            className="flex items-center gap-2 text-xs font-mono bg-slate-950/60 border border-white/5 rounded-lg px-3 py-2 text-slate-300"
+                            className="flex items-center gap-2 text-[15px] font-mono bg-slate-950/60 border border-white/5 rounded-lg px-3 py-2 text-slate-300"
                           >
                             <Zap className="w-3.5 h-3.5 text-lime-400 shrink-0" />
                             <span className="truncate">{f.text}</span>
@@ -511,7 +368,7 @@ useEffect(() => {
                         ))}
                       </AnimatePresence>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-emerald-400">
+                    <div className="flex items-center gap-2 text-[14px] text-emerald-400">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       Supabase Live ({invoices.length} Rows)
                     </div>
@@ -524,7 +381,7 @@ useEffect(() => {
             {activeTab === 'invoices' && (
               <div className={`${glass} p-4 sm:p-6 space-y-4`}>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-[15px]">
                     <thead className="text-slate-400 uppercase font-bold tracking-wider">
                       <tr className="border-b border-white/10">
                         <th className="p-3">Customer</th>
@@ -552,23 +409,23 @@ useEffect(() => {
                           >
                             <td className="p-3 font-semibold text-slate-200">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 flex items-center justify-center text-[11px] font-bold text-white">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 flex items-center justify-center text-[14px] font-bold text-white">
                                   {(inv.customer_name || '?').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                   {inv.customer_name}
-                                  <div className="text-[10px] text-slate-500 font-normal">{inv.customer_email}</div>
+                                  <div className="text-[13px] text-slate-500 font-normal">{inv.customer_email}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="p-3 font-mono text-slate-400">{inv.stripe_invoice_id}</td>
                             <td className="p-3 font-mono font-bold text-slate-100">
                               {formatCurrency(inv.amount_due, inv.currency || 'usd')}
-                              <span className="ml-1.5 text-[9px] text-slate-500 font-sans">{(inv.currency || 'usd').toUpperCase()}</span>
+                              <span className="ml-1.5 text-[12px] text-slate-500 font-sans">{(inv.currency || 'usd').toUpperCase()}</span>
                             </td>
                             <td className="p-3">
                               <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-bold uppercase ${
                                   inv.status === 'paid'
                                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                     : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
@@ -584,7 +441,7 @@ useEffect(() => {
                                 whileTap={inv.status !== 'paid' ? { scale: 0.95 } : undefined}
                                 onClick={() => handleSendReminder(inv)}
                                 disabled={sendingId === inv.id || inv.status === 'paid'}
-                                className={`relative inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+                                className={`relative inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-[15px] font-semibold transition ${
                                   inv.status === 'paid'
                                     ? 'bg-slate-800/60 text-slate-600 cursor-not-allowed'
                                     : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-lime-500 text-white shadow-lg shadow-blue-600/25'
@@ -608,7 +465,7 @@ useEffect(() => {
                   {sendStatus && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
+                      className={`p-3 rounded-xl text-[15px] flex items-center space-x-2 ${
                         sendStatus.success
                           ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
                           : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
@@ -627,13 +484,13 @@ useEffect(() => {
               <div className="space-y-6">
                 <div className={`${glass} flex items-center justify-between p-4`}>
                   <div>
-                    <h2 className="text-sm font-bold text-slate-100">Automated Ping Cadence</h2>
-                    <p className="text-xs text-slate-400">Configure reminder intervals and template text dispatches.</p>
+                    <h2 className="text-[17px] font-bold text-slate-100">Automated Ping Cadence</h2>
+                    <p className="text-[15px] text-slate-400">Configure reminder intervals and template text dispatches.</p>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={handleSaveSequence}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-lime-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-lg shadow-blue-600/25 transition"
+                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-lime-500 text-white text-[15px] font-semibold px-4 py-2.5 rounded-lg shadow-lg shadow-blue-600/25 transition"
                   >
                     {savedSuccess ? <CheckCircle className="w-4 h-4 text-lime-200" /> : <Save className="w-4 h-4" />}
                     <span>{savedSuccess ? 'Saved Rules!' : 'Save Cadence'}</span>
@@ -642,7 +499,7 @@ useEffect(() => {
 
                 <div className="relative pl-0 md:pl-14 space-y-2">
                   {/* Trigger node */}
-                  <div className="flex items-center gap-3 text-xs text-slate-300">
+                  <div className="flex items-center gap-3 text-[15px] text-slate-300">
                     <div className="hidden md:flex absolute left-0 w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 items-center justify-center">
                       <Clock className="w-4 h-4 text-amber-400" />
                     </div>
@@ -663,16 +520,16 @@ useEffect(() => {
                           <div className="flex items-center space-x-3">
                             <div className="relative bg-blue-500/10 text-blue-400 p-2 rounded-lg border border-blue-500/20">
                               <Calendar className="w-4 h-4" />
-                              <span className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 text-white text-[10px] font-bold flex items-center justify-center">
+                              <span className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 text-white text-[13px] font-bold flex items-center justify-center">
                                 {idx + 1}
                               </span>
                             </div>
                             <div>
-                              <span className="text-xs font-bold text-slate-200">Ping Step #{idx + 1}</span>
-                              <div className="text-[11px] text-slate-400">Triggers {seq.day} days after due date</div>
+                              <span className="text-[15px] font-bold text-slate-200">Ping Step #{idx + 1}</span>
+                              <div className="text-[14px] text-slate-400">Triggers {seq.day} days after due date</div>
                             </div>
                           </div>
-                          <label className="flex items-center space-x-2 cursor-pointer text-xs text-slate-300">
+                          <label className="flex items-center space-x-2 cursor-pointer text-[15px] text-slate-300">
                             <span>{seq.enabled ? 'Active' : 'Paused'}</span>
                             <span className={`relative w-9 h-5 rounded-full transition ${seq.enabled ? 'bg-lime-500' : 'bg-slate-700'}`}>
                               <motion.span
@@ -692,29 +549,29 @@ useEffect(() => {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[11px] font-semibold text-slate-400 uppercase">Subject Template</label>
+                          <label className="text-[14px] font-semibold text-slate-400 uppercase">Subject Template</label>
                           <input
                             type="text"
                             value={seq.subject}
                             onChange={(e) => updateSequence(idx, { subject: e.target.value })}
-                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-[15px] text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[11px] font-semibold text-slate-400 uppercase">Message Body</label>
+                          <label className="text-[14px] font-semibold text-slate-400 uppercase">Message Body</label>
                           <textarea
                             rows={4}
                             value={seq.body}
                             onChange={(e) => updateSequence(idx, { body: e.target.value })}
-                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition font-mono"
+                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-[15px] text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition font-mono"
                           />
                         </div>
                       </div>
                     </motion.div>
                   ))}
 
-                  <div className="flex items-center gap-3 text-xs text-slate-300 pt-2">
+                  <div className="flex items-center gap-3 text-[15px] text-slate-300 pt-2">
                     <div className="hidden md:flex absolute left-0 w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 items-center justify-center">
                       <CheckCircle className="w-4 h-4 text-emerald-400" />
                     </div>
@@ -729,19 +586,15 @@ useEffect(() => {
             {activeTab === 'integrations' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { name: 'Stripe', desc: 'Sync invoices & payment links in real time.', status: 'Connected', href: '#', color: 'from-violet-600 to-indigo-600' },
-                  { name: 'Supabase', desc: `Live database · ${invoices.length} invoice rows.`, status: 'Connected', href: '#', color: 'from-emerald-600 to-green-500' },
-                  { name: 'QuickBooks', desc: 'Import overdue invoices from your books.', status: qbdConnected ? 'Connected' : 'Connect', href: '/api/auth/quickbooks', color: 'from-green-600 to-lime-500' },
-                  { name: 'WhatsApp', desc: 'Send automated pings over WhatsApp via Twilio.', status: 'Connected', href: '#', color: 'from-emerald-500 to-teal-400' },
+                  { name: 'Stripe', desc: 'Sync invoices & payment links in real time.', status: 'Connected', color: 'from-violet-600 to-indigo-500' },
+                  { name: 'Supabase', desc: `Live database · ${invoices.length} invoice rows.`, status: 'Connected', color: 'from-emerald-600 to-green-500' },
+                  { name: 'QuickBooks', desc: 'Import overdue invoices from your books.', status: 'Coming soon', color: 'from-green-600 to-lime-500' },
+                  { name: 'WhatsApp', desc: 'Send pings over WhatsApp as well as email.', status: 'Coming soon', color: 'from-emerald-500 to-teal-400' },
                 ].map((it, i) => {
+                  const on = it.status === 'Connected';
                   return (
                     <motion.div
-                      key={it.name}
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="show"
-                      custom={i}
-                      whileHover={{ y: -4 }}
+                      key={it.name} variants={fadeUp} initial="hidden" animate="show" custom={i} whileHover={{ y: -4 }}
                       className={`${glass} p-5 flex items-start gap-4`}
                     >
                       <div className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${it.color} flex items-center justify-center shrink-0`}>
@@ -749,19 +602,19 @@ useEffect(() => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-slate-100">{it.name}</span>
-                          <a
-                            href={it.href}
-                            className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-colors cursor-pointer ${
-                              it.status === 'Connect'
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
-                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
-                            }`}
-                          >
+                          <span className="text-[17px] font-bold text-slate-100">{it.name}</span>
+                          <span className={`text-[13px] font-bold px-2 py-0.5 rounded-full border ${
+                            on ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-white/10'
+                          }`}>
                             {it.status}
-                          </a>
+                          </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">{it.desc}</p>
+                        <p className="text-[15px] text-slate-400 mt-1">{it.desc}</p>
+                        {!on && (
+                          <button className="mt-3 inline-flex items-center gap-1 text-[14px] font-semibold text-blue-400 hover:text-lime-300 transition">
+                            <Plus className="w-3 h-3" /> Notify me
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   );
