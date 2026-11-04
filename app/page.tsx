@@ -32,7 +32,7 @@ export default function SignUpPage() {
       {/* Header / Logo */}
       <div className="text-center mb-8 relative z-10">
         <div className="inline-flex items-center gap-2 mb-3">
-          <img src="/payping-robot.png" alt="Invoice Pilot" className="w-9 h-9 object-contain" />
+          <img src="/InvoicePilot-robot.png" alt="Invoice Pilot" className="w-9 h-9 object-contain" />
           <span className="text-2xl font-bold tracking-tight text-white">
             Invoice<span className="text-emerald-400">Pilot</span>
           </span>
