@@ -72,7 +72,11 @@ export default function Home() {
 });
 
 const [showAuthModal, setShowAuthModal] = useState(false);
-
+const [selectedPlan, setSelectedPlan] = useState<"trial" | "pro">("trial");
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [loading, setLoading] = useState(false);
+const [isSubmitted, setIsSubmitted] = useState(false);
   // QuickBooks Connection State Check
   const [qbdConnected, setQbdConnected] = useState<boolean>(false);
 
