@@ -3,11 +3,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+/* Tailwind CSS v4 directive; allow it through generic CSS linting. */
+/* stylelint-disable at-rule-no-unknown */
+@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+/* stylelint-enable at-rule-no-unknown */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,11 +26,27 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  font-size: 1.08rem; /* Scales up base body text smoothly */
 }
 
-/* Natural typography bump without breaking utility pills */
-@layer base {
-  html {
-    font-size: 17.5px; /* Subtle global scale bump */
-  }
+/* Slightly bump small utilities without breaking layout height */
+.text-xs {
+  font-size: 0.82rem !important;
+  line-height: 1.15 !important;
+}
+
+.text-sm {
+  font-size: 0.95rem !important;
+  line-height: 1.25 !important;
+}
+
+.text-base {
+  font-size: 1.1rem !important;
+}
+
+/* Prevent pill badges from wrapping text when fonts enlarge */
+span[class*="rounded-full"],
+div[class*="rounded-full"],
+span[class*="rounded-md"] {
+  white-space: nowrap;
 }
