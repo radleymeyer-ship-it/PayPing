@@ -319,11 +319,11 @@ useEffect(() => {
   <div className="flex items-center space-x-3">
     <RobotLogo size={44} />
     <div className="leading-tight">
-      <span className="text-2xl font-extrabold tracking-tight">
+      <span className="text-[32px] font-extrabold tracking-tight">
         <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Invoice</span>
         <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Pilot</span>
       </span>
-      <div className="text-[10px] uppercase tracking-widest text-slate-500">Integrates with QuickBooks</div>
+      <div className="text-[13px] uppercase tracking-widest text-slate-500">Integrates with QuickBooks</div>
     </div>
   </div>
         <nav className="flex space-x-1 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
@@ -331,7 +331,7 @@ useEffect(() => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={'relative px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ' + (activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white')}
+              className={'relative px-4 py-2 rounded-lg text-[15px] font-semibold flex items-center space-x-2 transition ' + (activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white')}
             >
               {activeTab === tab.id && (
                 <motion.span
@@ -350,7 +350,7 @@ useEffect(() => {
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-slate-100">{titles[activeTab]}</h1>
+          <h1 className="text-[32px] font-bold text-slate-100">{titles[activeTab]}</h1>
           <button
   onClick={async () => {
     setLoading(true);
@@ -371,7 +371,7 @@ useEffect(() => {
     }
   }}
   disabled={loading}
-  className="flex items-center space-x-1.5 text-xs bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition"
+  className="flex items-center space-x-1.5 text-[15px] bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition"
 >
   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
   <span>{loading ? 'Syncing...' : 'Sync Live DB'}</span>
@@ -425,15 +425,15 @@ useEffect(() => {
                     >
                       <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-2xl`} />
                       <div className="relative flex items-center justify-between">
-                        <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{c.label}</span>
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        <span className="text-[14px] text-slate-400 uppercase tracking-wider font-semibold">{c.label}</span>
+                        <span className={`inline-flex items-center gap-1 text-[13px] font-bold px-2 py-0.5 rounded-full border ${
                           c.up ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                         }`}>
                           {c.globe ? <Globe2 className="w-3 h-3" /> : c.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                           {c.badge}
                         </span>
                       </div>
-                      <div className={`relative text-3xl font-extrabold tracking-tight mt-3 ${c.color}`}>{c.value}</div>
+                      <div className={`relative text-[40px] font-extrabold tracking-tight mt-3 ${c.color}`}>{c.value}</div>
                     </motion.div>
                   ))}
                 </div>
@@ -485,12 +485,12 @@ useEffect(() => {
                   <div className="space-y-4 min-w-0">
                     <div className="flex items-center gap-2">
                       <Radar className="w-4 h-4 text-lime-400" />
-                      <h2 className="text-sm font-bold text-slate-100">AI Bot Dispatch Status</h2>
-                      <span className="ml-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-lime-300 bg-lime-400/10 border border-lime-400/20 px-2 py-0.5 rounded-full">
+                      <h2 className="text-[20px] font-bold text-slate-100">AI Bot Dispatch Status</h2>
+                      <span className="ml-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-lime-300 bg-lime-400/10 border border-lime-400/20 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" /> ONLINE
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-[15px] text-slate-400">
                       Scanning for overdue invoices · currently targeting{' '}
                       <span className="text-lime-300 font-semibold">{target}</span>
                     </div>
@@ -503,7 +503,7 @@ useEffect(() => {
                             initial={{ opacity: 0, x: -16 }}
                             animate={{ opacity: 1 - i * 0.2, x: 0 }}
                             exit={{ opacity: 0 }}
-                            className="flex items-center gap-2 text-xs font-mono bg-slate-950/60 border border-white/5 rounded-lg px-3 py-2 text-slate-300"
+                            className="flex items-center gap-2 text-[15px] font-mono bg-slate-950/60 border border-white/5 rounded-lg px-3 py-2 text-slate-300"
                           >
                             <Zap className="w-3.5 h-3.5 text-lime-400 shrink-0" />
                             <span className="truncate">{f.text}</span>
@@ -511,7 +511,7 @@ useEffect(() => {
                         ))}
                       </AnimatePresence>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-emerald-400">
+                    <div className="flex items-center gap-2 text-[14px] text-emerald-400">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       Supabase Live ({invoices.length} Rows)
                     </div>
@@ -524,7 +524,7 @@ useEffect(() => {
             {activeTab === 'invoices' && (
               <div className={`${glass} p-4 sm:p-6 space-y-4`}>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-[15px]">
                     <thead className="text-slate-400 uppercase font-bold tracking-wider">
                       <tr className="border-b border-white/10">
                         <th className="p-3">Customer</th>
@@ -552,23 +552,23 @@ useEffect(() => {
                           >
                             <td className="p-3 font-semibold text-slate-200">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 flex items-center justify-center text-[11px] font-bold text-white">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 flex items-center justify-center text-[14px] font-bold text-white">
                                   {(inv.customer_name || '?').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                   {inv.customer_name}
-                                  <div className="text-[10px] text-slate-500 font-normal">{inv.customer_email}</div>
+                                  <div className="text-[13px] text-slate-500 font-normal">{inv.customer_email}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="p-3 font-mono text-slate-400">{inv.stripe_invoice_id}</td>
                             <td className="p-3 font-mono font-bold text-slate-100">
                               {formatCurrency(inv.amount_due, inv.currency || 'usd')}
-                              <span className="ml-1.5 text-[9px] text-slate-500 font-sans">{(inv.currency || 'usd').toUpperCase()}</span>
+                              <span className="ml-1.5 text-[12px] text-slate-500 font-sans">{(inv.currency || 'usd').toUpperCase()}</span>
                             </td>
                             <td className="p-3">
                               <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-bold uppercase ${
                                   inv.status === 'paid'
                                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                     : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
@@ -584,7 +584,7 @@ useEffect(() => {
                                 whileTap={inv.status !== 'paid' ? { scale: 0.95 } : undefined}
                                 onClick={() => handleSendReminder(inv)}
                                 disabled={sendingId === inv.id || inv.status === 'paid'}
-                                className={`relative inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+                                className={`relative inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-[15px] font-semibold transition ${
                                   inv.status === 'paid'
                                     ? 'bg-slate-800/60 text-slate-600 cursor-not-allowed'
                                     : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-lime-500 text-white shadow-lg shadow-blue-600/25'
@@ -608,7 +608,7 @@ useEffect(() => {
                   {sendStatus && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
+                      className={`p-3 rounded-xl text-[15px] flex items-center space-x-2 ${
                         sendStatus.success
                           ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
                           : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
@@ -627,13 +627,13 @@ useEffect(() => {
               <div className="space-y-6">
                 <div className={`${glass} flex items-center justify-between p-4`}>
                   <div>
-                    <h2 className="text-sm font-bold text-slate-100">Automated Ping Cadence</h2>
-                    <p className="text-xs text-slate-400">Configure reminder intervals and template text dispatches.</p>
+                    <h2 className="text-[20px] font-bold text-slate-100">Automated Ping Cadence</h2>
+                    <p className="text-[15px] text-slate-400">Configure reminder intervals and template text dispatches.</p>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={handleSaveSequence}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-lime-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-lg shadow-blue-600/25 transition"
+                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-lime-500 text-white text-[15px] font-semibold px-4 py-2.5 rounded-lg shadow-lg shadow-blue-600/25 transition"
                   >
                     {savedSuccess ? <CheckCircle className="w-4 h-4 text-lime-200" /> : <Save className="w-4 h-4" />}
                     <span>{savedSuccess ? 'Saved Rules!' : 'Save Cadence'}</span>
@@ -642,7 +642,7 @@ useEffect(() => {
 
                 <div className="relative pl-0 md:pl-14 space-y-2">
                   {/* Trigger node */}
-                  <div className="flex items-center gap-3 text-xs text-slate-300">
+                  <div className="flex items-center gap-3 text-[15px] text-slate-300">
                     <div className="hidden md:flex absolute left-0 w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 items-center justify-center">
                       <Clock className="w-4 h-4 text-amber-400" />
                     </div>
@@ -663,16 +663,16 @@ useEffect(() => {
                           <div className="flex items-center space-x-3">
                             <div className="relative bg-blue-500/10 text-blue-400 p-2 rounded-lg border border-blue-500/20">
                               <Calendar className="w-4 h-4" />
-                              <span className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 text-white text-[10px] font-bold flex items-center justify-center">
+                              <span className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-gradient-to-tr from-blue-600 to-lime-500 text-white text-[13px] font-bold flex items-center justify-center">
                                 {idx + 1}
                               </span>
                             </div>
                             <div>
-                              <span className="text-xs font-bold text-slate-200">Ping Step #{idx + 1}</span>
-                              <div className="text-[11px] text-slate-400">Triggers {seq.day} days after due date</div>
+                              <span className="text-[15px] font-bold text-slate-200">Ping Step #{idx + 1}</span>
+                              <div className="text-[14px] text-slate-400">Triggers {seq.day} days after due date</div>
                             </div>
                           </div>
-                          <label className="flex items-center space-x-2 cursor-pointer text-xs text-slate-300">
+                          <label className="flex items-center space-x-2 cursor-pointer text-[15px] text-slate-300">
                             <span>{seq.enabled ? 'Active' : 'Paused'}</span>
                             <span className={`relative w-9 h-5 rounded-full transition ${seq.enabled ? 'bg-lime-500' : 'bg-slate-700'}`}>
                               <motion.span
@@ -692,29 +692,29 @@ useEffect(() => {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[11px] font-semibold text-slate-400 uppercase">Subject Template</label>
+                          <label className="text-[14px] font-semibold text-slate-400 uppercase">Subject Template</label>
                           <input
                             type="text"
                             value={seq.subject}
                             onChange={(e) => updateSequence(idx, { subject: e.target.value })}
-                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-[15px] text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[11px] font-semibold text-slate-400 uppercase">Message Body</label>
+                          <label className="text-[14px] font-semibold text-slate-400 uppercase">Message Body</label>
                           <textarea
                             rows={4}
                             value={seq.body}
                             onChange={(e) => updateSequence(idx, { body: e.target.value })}
-                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition font-mono"
+                            className="w-full bg-slate-950/70 border border-white/10 rounded-lg px-3 py-2 text-[15px] text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition font-mono"
                           />
                         </div>
                       </div>
                     </motion.div>
                   ))}
 
-                  <div className="flex items-center gap-3 text-xs text-slate-300 pt-2">
+                  <div className="flex items-center gap-3 text-[15px] text-slate-300 pt-2">
                     <div className="hidden md:flex absolute left-0 w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 items-center justify-center">
                       <CheckCircle className="w-4 h-4 text-emerald-400" />
                     </div>
@@ -749,10 +749,10 @@ useEffect(() => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-slate-100">{it.name}</span>
+                          <span className="text-[20px] font-bold text-slate-100">{it.name}</span>
                           <a
                             href={it.href}
-                            className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-colors cursor-pointer ${
+                            className={`text-[13px] font-bold px-3 py-1 rounded-full border transition-colors cursor-pointer ${
                               it.status === 'Connect'
                                 ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
                                 : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
@@ -761,7 +761,7 @@ useEffect(() => {
                             {it.status}
                           </a>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">{it.desc}</p>
+                        <p className="text-[15px] text-slate-400 mt-1">{it.desc}</p>
                       </div>
                     </motion.div>
                   );
