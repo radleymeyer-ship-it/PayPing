@@ -772,6 +772,120 @@ useEffect(() => {
           </motion.div>
         </AnimatePresence>
       </main>
+    {/* ------------ AUTH / SIGNUP MODAL OVERLAY ------------ */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-4xl bg-[#07090e] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl my-8"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white text-sm font-semibold p-2 cursor-pointer"
+              >
+                ✕ Close
+              </button>
+
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 mb-2">
+                  <span className="text-xl font-bold text-white">Invoice<span className="text-emerald-400">Pilot</span></span>
+                </div>
+                <h2 className="text-2xl font-extrabold text-white">Sign up to connect live data</h2>
+                <p className="text-xs text-slate-400 mt-1">Automated Reminders. Faster Payments</p>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {!isSubmitted ? (
+                  <div className="space-y-6">
+                    {/* Tier Selection */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div
+                        onClick={() => setSelectedPlan("trial")}
+                        className={`cursor-pointer rounded-xl p-5 border transition-all ${
+                          selectedPlan === "trial" ? "bg-slate-900 border-emerald-500 ring-1 ring-emerald-500" : "bg-slate-900/40 border-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">10-Day Free Trial</span>
+                          <div className={`w-4 h-4 rounded-full border ${selectedPlan === "trial" ? "bg-emerald-400 border-emerald-400" : "border-slate-600"}`} />
+                        </div>
+                        <div className="text-3xl font-bold text-white">$0 <span className="text-xs text-slate-400 font-normal">/ first 10 days</span></div>
+                      </div>
+
+                      <div
+                        onClick={() => setSelectedPlan("pro")}
+                        className={`cursor-pointer rounded-xl p-5 border transition-all ${
+                          selectedPlan === "pro" ? "bg-slate-900 border-blue-500 ring-1 ring-blue-500" : "bg-slate-900/40 border-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Unlimited Pro</span>
+                          <div className={`w-4 h-4 rounded-full border ${selectedPlan === "pro" ? "bg-blue-400 border-blue-400" : "border-slate-600"}`} />
+                        </div>
+                        <div className="text-3xl font-bold text-white">$15 <span className="text-xs text-slate-400 font-normal">/ month</span></div>
+                      </div>
+                    </div>
+
+                    {/* Auth Form */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!email || !password) return;
+                        setLoading(true);
+                        setTimeout(() => {
+                          setLoading(false);
+                          setIsSubmitted(true);
+                        }, 1000);
+                      }}
+                      className="space-y-4"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input
+                          type="email"
+                          required
+                          placeholder="Work Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500 outline-none"
+                        />
+                        <input
+                          type="password"
+                          required
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500 outline-none"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl text-sm transition-colors cursor-pointer"
+                      >
+                        {loading ? "Creating Account..." : `Continue with ${selectedPlan === "trial" ? "10-Day Free Trial" : "Unlimited Pro ($15/mo)"} →`}
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <h3 className="text-xl font-bold text-white mb-2">Check your email</h3>
+                    <p className="text-sm text-slate-300 mb-4">We sent a link to <strong className="text-emerald-400">{email}</strong>.</p>
+                    <button onClick={() => setShowAuthModal(false)} className="text-xs text-slate-400 underline cursor-pointer">
+                      Close window
+                    </button>
+                  </div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
