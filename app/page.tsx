@@ -763,16 +763,23 @@ useEffect(() => {
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[20px] font-bold text-slate-100">{it.name}</span>
-                          <a
-                            href={it.href}
-                            className={`text-[13px] font-bold px-3 py-1 rounded-full border transition-colors cursor-pointer ${
-                              it.status === 'Connect'
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
-                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
-                            }`}
-                          >
-                            {it.status}
-                          </a>
+                          <button
+                onClick={(e) => {
+                e.preventDefault();
+                 if (it.name === 'QuickBooks' && !qbdConnected) {
+                  setShowAuthModal(true);
+                    } else if (it.href !== '#') {
+                     window.location.href = it.href;
+                }
+             }}
+                     className={`text-[13px] font-bold px-3 py-1 rounded-full border transition-colors cursor-pointer ${
+                   it.status === 'Connect'
+                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
+           }`}
+>
+                  {it.status}
+                        </button>
                         </div>
                         <p className="text-[15px] text-slate-400 mt-1">{it.desc}</p>
                       </div>
