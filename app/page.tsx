@@ -368,16 +368,28 @@ useEffect(() => {
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-[32px] font-bold text-slate-100">{titles[activeTab]}</h1>
-          
- <button
-  onClick={() => setShowAuthModal(true)}
-  className="flex items-center space-x-1.5 text-[15px] bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition cursor-pointer"
->
-  <RefreshCw className="w-3.5 h-3.5" />
-  <span>Sync Live DB</span>
-</button>
-        </div>
+  <h1 className="text-[32px] font-bold text-slate-100">{titles[activeTab]}</h1>
+
+  <div className="flex items-center space-x-3">
+    {/* Sync Live DB Button */}
+    <button
+      onClick={() => setShowAuthModal(true)}
+      className="flex items-center space-x-1.5 text-[15px] bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition text-slate-200 cursor-pointer"
+    >
+      <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+      <span>Sync Live DB</span>
+    </button>
+
+    {/* Connect QuickBooks Button (Gated) */}
+    <button
+      onClick={() => setShowAuthModal(true)}
+      className="flex items-center space-x-1.5 text-[15px] bg-slate-900/70 backdrop-blur border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition text-slate-200 cursor-pointer"
+    >
+      <Plug className="w-3.5 h-3.5 text-blue-400" />
+      <span>{qbdConnected ? "Connected to QuickBooks" : "Connect QuickBooks"}</span>
+    </button>
+  </div>
+</div>
 
         <AnimatePresence mode="wait">
           <motion.div
