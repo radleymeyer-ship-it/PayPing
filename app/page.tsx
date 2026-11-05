@@ -321,6 +321,7 @@ useEffect(() => {
 
       {/* Header */}
 <header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-6 py-4 flex flex-wrap gap-4 items-center justify-between">
+  {/* Left: Logo & Slogan */}
   <div className="flex items-center space-x-3">
     <RobotLogo size={44} />
     <div className="leading-tight">
@@ -328,29 +329,41 @@ useEffect(() => {
         <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Invoice</span>
         <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Pilot</span>
       </span>
-      <div className="text-[12px] uppercase tracking-widest text-slate-500">Automated Reminders. Faster Payments</div>
+      <div className="text-[11px] uppercase tracking-widest text-slate-500">Automated Reminders. Faster Payments</div>
     </div>
   </div>
-        <nav className="flex space-x-1 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={'relative px-4 py-2 rounded-lg text-[15px] font-semibold flex items-center space-x-2 transition ' + (activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white')}
-            >
-              {activeTab === tab.id && (
-                <motion.span
-                  layoutId="tab-pill"
-                  className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-600/30"
-                  transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                />
-              )}
-              <tab.icon className="relative w-4 h-4" />
-              <span className="relative hidden sm:inline">{tab.label}</span>
-            </button>
-          ))}
-        </nav>
-      </header>
+
+  {/* Center / Nav Tabs */}
+  <nav className="flex space-x-1 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
+    {tabs.map((tab) => (
+      <button
+        key={tab.id}
+        onClick={() => setActiveTab(tab.id)}
+        className={'relative px-4 py-2 rounded-lg text-[15px] font-semibold flex items-center space-x-2 transition ' + (activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-slate-200')}
+      >
+        {activeTab === tab.id && (
+          <motion.span
+            layoutId="tab-pill"
+            className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-600/30"
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+          />
+        )}
+        <tab.icon className="relative w-4 h-4" />
+        <span className="relative hidden sm:inline">{tab.label}</span>
+      </button>
+    ))}
+  </nav>
+
+  {/* Right: Sign In / Register Button */}
+  <div>
+    <button
+      onClick={() => setShowAuthModal(true)}
+      className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+    >
+      Sign In / Register
+    </button>
+  </div>
+</header>
 
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
