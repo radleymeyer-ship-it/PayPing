@@ -75,7 +75,6 @@ const [showAuthModal, setShowAuthModal] = useState(false);
 const [selectedPlan, setSelectedPlan] = useState<"trial" | "pro">("trial");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
-const [loading, setLoading] = useState(false);
 const [isSubmitted, setIsSubmitted] = useState(false);
   // QuickBooks Connection State Check
   const [qbdConnected, setQbdConnected] = useState<boolean>(false);
@@ -329,7 +328,7 @@ useEffect(() => {
         <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Invoice</span>
         <span className="bg-gradient-to-r from-lime-300 to-green-500 bg-clip-text text-transparent">Pilot</span>
       </span>
-      <div className="text-[13px] uppercase tracking-widest text-slate-500">Integrates with QuickBooks</div>
+      <div className="text-[13px] uppercase tracking-widest text-slate-500">Automated Reminders. Faster Payments</div>
     </div>
   </div>
         <nav className="flex space-x-1 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
