@@ -367,6 +367,25 @@ useEffect(() => {
 
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+        {/* Demo Mode Notification Banner */}
+  <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 rounded-xl backdrop-blur-md">
+    <div className="flex items-center space-x-2.5">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+      <span className="text-xs font-semibold text-emerald-300">
+        Demo Mode — You are viewing sample data. Sign in to connect your own invoices.
+      </span>
+    </div>
+    
+    <button
+      onClick={() => setShowAuthModal(true)}
+      className="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4 cursor-pointer"
+    >
+      Sign In / Register →
+    </button>
+  </div>
         <div className="flex justify-between items-center">
   <h1 className="text-[32px] font-bold text-slate-100">{titles[activeTab]}</h1>
 
