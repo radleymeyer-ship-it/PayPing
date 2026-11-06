@@ -9,7 +9,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
 
-
+declare global {
+  interface Window {
+    Paddle?: any;
+  }
+}
 type Tab = 'dashboard' | 'invoices' | 'sequence' | 'integrations';
 
 /* ---------- Robot logo (uses /paypring-robot.png from /public) ---------- */
@@ -75,9 +79,29 @@ const [showAuthModal, setShowAuthModal] = useState(false);
 const [selectedPlan, setSelectedPlan] = useState<"trial" | "pro">("trial");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
-const [loading, setLoading] = useState(false);
-const [isSubmitted, setIsSubmitted] = useState(false);
-  // QuickBooks Connection State Check
+const [authLoading, setAuthLoading] = useState(false);const [isSubmitted, setIsSubmitted] = useState(false);
+
+
+  // Add your Paddle checkout handler here:
+  const handlePaddleCheckout = () => {
+    if (typeof window !== 'undefined' && window.Paddle) {
+      window.Paddle.Checkout.open({
+        items: [
+          {
+            priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_PRO,
+            quantity: 1,
+          },
+        ],
+        customer: {
+          email: email || undefined,
+        },
+      });
+    } else {
+      alert("Paddle SDK is loading... Please try again in a moment.");
+    }
+  };
+  
+// QuickBooks Connection State Check
   const [qbdConnected, setQbdConnected] = useState<boolean>(false);
 
   useEffect(() => {
