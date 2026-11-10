@@ -615,4 +615,135 @@ export default function Home() {
                           type="text"
                           value={seq.subject}
                           onChange={(e) => updateSequence(idx, { subject: e.target.value })}
-                          className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-
+                          className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500"
+                        />
+                        <textarea
+                          rows={2}
+                          value={seq.body}
+                          onChange={(e) => updateSequence(idx, { body: e.target.value })}
+                          className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ---------- INTEGRATIONS TAB ---------- */}
+              {activeTab === 'integrations' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className={`${glass} p-6 space-y-4`}>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
+                        QB
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-slate-100">QuickBooks Online</h2>
+                        <p className="text-xs text-slate-400">Sync invoices and client financial data.</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowAuthModal(true)}
+                      className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-sm font-semibold text-slate-200 transition cursor-pointer"
+                    >
+                      {qbdConnected ? "Connected" : "Connect QuickBooks"}
+                    </button>
+                  </div>
+
+                  <div className={`${glass} p-6 space-y-4`}>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
+                        Paddle
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-slate-100">Paddle Billing</h2>
+                        <p className="text-xs text-slate-400">Pro subscription gateway active ($15/mo).</p>
+                      </div>
+                    </div>
+                    <button className="w-full py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm font-semibold text-emerald-400 cursor-default">
+                      Active Gateway
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
+
+      {/* ---------- AUTH & UPGRADE MODAL ---------- */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`${glass} max-w-md w-full p-6 space-y-6 relative`}
+          >
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-100">Qubi AI Pro</h2>
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 bg-slate-950/60 p-1 rounded-xl border border-white/10">
+              <button
+                type="button"
+                onClick={() => setSelectedPlan("trial")}
+                className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  selectedPlan === "trial" ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Free Trial
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedPlan("pro")}
+                className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  selectedPlan === "pro" ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Pro Tier ($15/mo)
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-slate-400 block mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedPlan === 'pro') {
+                    handlePaddleCheckout();
+                  } else {
+                    alert("Trial account access initialized!");
+                    setShowAuthModal(false);
+                  }
+                }}
+                className={`w-full py-3 font-bold rounded-xl transition cursor-pointer ${
+                  selectedPlan === 'pro'
+                    ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white'
+                }`}
+              >
+                {selectedPlan === 'pro' ? 'Upgrade to Pro — $15/mo' : 'Start Free Trial'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
