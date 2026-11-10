@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Clock, Send, Settings, BarChart3, RefreshCw, Calendar, CheckCircle, Save, Mail,
   AlertCircle, TrendingUp, TrendingDown, Globe2, Radar, Zap, Plug, Plus, ArrowDown, LayoutDashboard,
-  Users, Layers, ExternalLink, Activity, ShieldCheck, Sparkles, MessageSquare, PhoneCall, Smartphone, Radio
+  Users, Layers, ExternalLink, Activity, ShieldCheck, Sparkles, MessageSquare, PhoneCall, Smartphone, Radio, Play
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
@@ -75,6 +75,18 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"trial" | "pro">("trial");
   const [email, setEmail] = useState("");
+
+  // Simulator Modal State
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [simulatorChannel, setSimulatorChannel] = useState<Channel>('whatsapp');
+  const [simulatorText, setSimulatorText] = useState('');
+
+  const handleOpenSimulator = () => {
+    setSimulatorText(
+      `Hi Acme Corp,\n\nThis is an automated reminder from Qubi AI regarding invoice #INV-2024-03 for $4,250.00 which was due on Nov 01.\n\nSecure payment link: https://qubi.ai/pay/inv_9981a\n\nPlease settle to keep your account active.`
+    );
+    setShowSimulator(true);
+  };
 
   const handlePaddleCheckout = () => {
     if (typeof window !== 'undefined' && window.Paddle) {
@@ -155,6 +167,15 @@ export default function Home() {
     email: { label: 'Email', icon: Mail, color: 'text-sky-400 border-sky-500/30 bg-sky-500/10', badge: 'Standard' },
     whatsapp: { label: 'WhatsApp', icon: PhoneCall, color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10', badge: 'Pro Channel' },
     sms: { label: 'SMS Ping', icon: Smartphone, color: 'text-purple-400 border-purple-500/30 bg-purple-500/10', badge: 'Pro Channel' },
+  };
+
+  // Helper for mock risk grades (A to F) based on invoice ID string hash
+  const getRiskGrade = (id: string, status: string) => {
+    if (status === 'paid') return { grade: 'Grade A', label: 'Fast Payer', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+    const charCode = (id || 'a').charCodeAt(0);
+    if (charCode % 3 === 0) return { grade: 'Grade C', label: 'Slow Payer', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
+    if (charCode % 5 === 0) return { grade: 'Grade F', label: 'High Risk', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' };
+    return { grade: 'Grade B', label: 'Reliable', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' };
   };
 
   const applyTonePreset = (idx: number, newTone: Tone) => {
@@ -256,7 +277,7 @@ export default function Home() {
 
   const titles: Record<Tab, string> = {
     dashboard: 'Dashboard Overview',
-    invoices: 'Invoices & Client Portal',
+    invoices: 'Invoices, Portal & Risk Scoring',
     sequence: 'AI Sequence & Channel Engine',
     integrations: 'Accounting Integrations',
     team: 'Staff Management & Tasks',
@@ -367,12 +388,21 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
         <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-8 py-4 flex items-center justify-between">
           <h1 className="text-[22px] font-bold text-slate-100">{titles[activeTab]}</h1>
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
-          >
-            Start 14-Day Free Trial
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleOpenSimulator}
+              className="flex items-center space-x-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shadow-lg shadow-blue-600/10"
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span>Test AI Dispatch</span>
+            </button>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
+            >
+              Start 14-Day Free Trial
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 max-w-7xl w-full mx-auto p-8 space-y-6">
@@ -383,7 +413,7 @@ export default function Home() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <span className="text-xs font-semibold text-emerald-300">
-                14-Day Free Trial active — Multi-channel engine ready. Upgrade to Pro ($15/mo) for WhatsApp & SMS automation.
+                14-Day Free Trial active — Risk Scoring & Simulator online. Upgrade to Pro ($15/mo) for WhatsApp automation.
               </span>
             </div>
             <button
@@ -406,7 +436,6 @@ export default function Home() {
               {/* OVERVIEW */}
               {activeTab === 'dashboard' && (
                 <>
-                  {/* HERO METRICS */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <motion.div variants={fadeUp} initial="hidden" animate="show" className={`${glass} p-8 relative overflow-hidden`}>
                       <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/20 to-transparent blur-3xl" />
@@ -495,7 +524,6 @@ export default function Home() {
                     </div>
                   </motion.div>
 
-                  {/* RECOVERY OVER TIME CHART */}
                   <motion.div variants={fadeUp} initial="hidden" animate="show" custom={3} className={`${glass} p-6 space-y-4`}>
                     <div className="flex items-center justify-between">
                       <div>
@@ -520,7 +548,6 @@ export default function Home() {
                     </div>
                   </motion.div>
 
-                  {/* BOT RADAR */}
                   <motion.div variants={fadeUp} initial="hidden" animate="show" custom={4} className={`${glass} p-6 grid md:grid-cols-[auto_1fr] gap-8 items-center`}>
                     <div className="relative w-48 h-48 mx-auto">
                       <div className="absolute inset-0 rounded-full border border-lime-400/30 bg-slate-950/60" />
@@ -574,14 +601,22 @@ export default function Home() {
                 </>
               )}
 
-              {/* INVOICES */}
+              {/* INVOICES WITH CUSTOMER RISK SCORING (A-F GRADING) */}
               {activeTab === 'invoices' && (
                 <div className={`${glass} p-6 space-y-6`}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-100">Invoices, Client Portal & Risk Grading</h2>
+                      <p className="text-xs text-slate-400">Review payer risk scores (A–F) and manage client billing links.</p>
+                    </div>
+                  </div>
+
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead className="text-slate-400 uppercase font-bold tracking-wider text-xs">
                         <tr className="border-b border-white/10">
                           <th className="p-3">Customer</th>
+                          <th className="p-3">Payer Risk Score</th>
                           <th className="p-3">Invoice ID</th>
                           <th className="p-3">Amount</th>
                           <th className="p-3">Status</th>
@@ -592,57 +627,66 @@ export default function Home() {
                       <tbody>
                         {invoices.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="p-8 text-center text-slate-500">
+                            <td colSpan={7} className="p-8 text-center text-slate-500">
                               {loading ? 'Fetching invoices...' : 'No invoices found.'}
                             </td>
                           </tr>
                         ) : (
-                          invoices.map((inv, i) => (
-                            <motion.tr
-                              key={inv.id}
-                              className="border-b border-white/5 hover:bg-white/[0.04] transition group text-xs"
-                            >
-                              <td className="p-3 font-semibold text-slate-200">
-                                <div>{inv.customer_name}</div>
-                                <div className="text-[11px] text-slate-500 font-normal">{inv.customer_email}</div>
-                              </td>
-                              <td className="p-3 font-mono text-slate-400">{inv.stripe_invoice_id || inv.id}</td>
-                              <td className="p-3 font-mono font-bold text-slate-100">
-                                {formatCurrency(inv.amount_due, inv.currency || 'usd')}
-                              </td>
-                              <td className="p-3">
-                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase ${
-                                  inv.status === 'paid'
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                }`}>
-                                  {inv.status}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <button
-                                  onClick={() => alert(`Client Portal URL generated for ${inv.customer_name}`)}
-                                  className="flex items-center space-x-1 text-blue-400 hover:underline cursor-pointer"
-                                >
-                                  <span>Portal Link</span>
-                                  <ExternalLink className="w-3 h-3" />
-                                </button>
-                              </td>
-                              <td className="p-3 text-right">
-                                <button
-                                  onClick={() => handleSendReminder(inv)}
-                                  disabled={sendingId === inv.id || inv.status === 'paid'}
-                                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                          invoices.map((inv, i) => {
+                            const risk = getRiskGrade(inv.id, inv.status);
+                            return (
+                              <motion.tr
+                                key={inv.id}
+                                className="border-b border-white/5 hover:bg-white/[0.04] transition group text-xs"
+                              >
+                                <td className="p-3 font-semibold text-slate-200">
+                                  <div>{inv.customer_name}</div>
+                                  <div className="text-[11px] text-slate-500 font-normal">{inv.customer_email}</div>
+                                </td>
+                                <td className="p-3">
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${risk.color}`}>
+                                    <ShieldCheck className="w-3 h-3" />
+                                    {risk.grade} ({risk.label})
+                                  </span>
+                                </td>
+                                <td className="p-3 font-mono text-slate-400">{inv.stripe_invoice_id || inv.id}</td>
+                                <td className="p-3 font-mono font-bold text-slate-100">
+                                  {formatCurrency(inv.amount_due, inv.currency || 'usd')}
+                                </td>
+                                <td className="p-3">
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase ${
                                     inv.status === 'paid'
-                                      ? 'bg-slate-800/60 text-slate-600 cursor-not-allowed'
-                                      : 'bg-blue-600 hover:bg-blue-500 text-white'
-                                  }`}
-                                >
-                                  {sendingId === inv.id ? 'Sending...' : 'Send Ping'}
-                                </button>
-                              </td>
-                            </motion.tr>
-                          ))
+                                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                  }`}>
+                                    {inv.status}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <button
+                                    onClick={() => alert(`Client Portal URL generated for ${inv.customer_name}`)}
+                                    className="flex items-center space-x-1 text-blue-400 hover:underline cursor-pointer"
+                                  >
+                                    <span>Portal Link</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </button>
+                                </td>
+                                <td className="p-3 text-right">
+                                  <button
+                                    onClick={() => handleSendReminder(inv)}
+                                    disabled={sendingId === inv.id || inv.status === 'paid'}
+                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                                      inv.status === 'paid'
+                                        ? 'bg-slate-800/60 text-slate-600 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-500 text-white'
+                                    }`}
+                                  >
+                                    {sendingId === inv.id ? 'Sending...' : 'Send Ping'}
+                                  </button>
+                                </td>
+                              </motion.tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
@@ -650,7 +694,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SEQUENCE ENGINE WITH CHANNEL TOGGLES */}
+              {/* SEQUENCE ENGINE */}
               {activeTab === 'sequence' && (
                 <div className="space-y-6">
                   <div className={`${glass} flex items-center justify-between p-6`}>
@@ -690,7 +734,7 @@ export default function Home() {
                           </label>
                         </div>
 
-                        {/* CHANNEL TOGGLE SELECTOR */}
+                        {/* CHANNEL TOGGLE */}
                         <div className="space-y-2">
                           <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                             <Radio className="w-3.5 h-3.5 text-lime-400" /> Dispatch Channel:
@@ -721,7 +765,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* AI TONE SELECTOR */}
+                        {/* TONE SELECTOR */}
                         <div className="space-y-2 pt-2">
                           <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                             <MessageSquare className="w-3.5 h-3.5 text-lime-400" /> AI Tone Persona:
@@ -864,7 +908,71 @@ export default function Home() {
         </main>
       </div>
 
-      {/* MODAL */}
+      {/* ---------- TEST PING SIMULATOR MODAL ---------- */}
+      {showSimulator && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`${glass} max-w-lg w-full p-6 space-y-6 relative`}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-lime-400" />
+                <h2 className="text-lg font-bold text-slate-100">AI Dispatch Simulator</h2>
+              </div>
+              <button
+                onClick={() => setShowSimulator(false)}
+                className="text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex space-x-2 bg-slate-950/60 p-1 rounded-xl border border-white/10">
+              {(['whatsapp', 'email', 'sms'] as Channel[]).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => {
+                    setSimulatorChannel(c);
+                    if (c === 'whatsapp') {
+                      setSimulatorText(`*Qubi AI Notice*\n\nHi Acme Corp,\n\nInvoice #INV-2024-03 ($4,250.00) is now due. Tap below to pay instantly:\n🔗 https://qubi.ai/pay/inv_9981a`);
+                    } else if (c === 'email') {
+                      setSimulatorText(`Subject: Friendly Reminder: Invoice #INV-2024-03 is due\n\nHi Acme Corp,\n\nThis is a friendly reminder that your balance of $4,250.00 is due. You can complete payment here: https://qubi.ai/pay/inv_9981a`);
+                    } else {
+                      setSimulatorText(`[Qubi AI] Reminder: Invoice #INV-2024-03 ($4,250.00) is due. Pay now: https://qubi.ai/pay/inv_9981a`);
+                    }
+                  }}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg uppercase tracking-wider transition cursor-pointer ${
+                    simulatorChannel === c ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-slate-950/80 p-4 rounded-xl border border-white/10 font-mono text-xs text-slate-300 whitespace-pre-wrap">
+              {simulatorText}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  alert("Simulated test ping successfully dispatched to sandbox!");
+                  setShowSimulator(false);
+                }}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                Send Test Ping Now
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ---------- AUTH & UPGRADE MODAL ---------- */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
           <motion.div
