@@ -8,23 +8,12 @@ export async function GET() {
   'profile',
   'email',
   'offline_access',
-  'app.connections',
   'accounting.settings',
   'accounting.contacts',
-  'accounting.attachments',
   'accounting.payments',
   'accounting.invoices',
   'accounting.banktransactions',
-  'accounting.manualjournals',
-  'accounting.reports.read',
-  'payroll.employees',
-  'payroll.payruns',
-  'payroll.payslip',
-  'payroll.settings',
-  'payroll.timesheets',
-  'files',
-  'assets',
-  'projects'
+  'accounting.manualjournals'
 ].join(' ');
   
   if (!clientId) {
