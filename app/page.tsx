@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Clock, Send, Settings, BarChart3, RefreshCw, Calendar, CheckCircle, Save, Mail,
   AlertCircle, TrendingUp, TrendingDown, Globe2, Radar, Zap, Plug, Plus, ArrowDown, LayoutDashboard,
-  Users, Layers, ExternalLink, Activity, ShieldCheck, Sparkles, MessageSquare
+  Users, Layers, ExternalLink, Activity, ShieldCheck, Sparkles, MessageSquare, PhoneCall, Smartphone, Radio
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
@@ -17,6 +17,7 @@ declare global {
 }
 type Tab = 'dashboard' | 'invoices' | 'sequence' | 'integrations' | 'team';
 type Tone = 'friendly' | 'firm' | 'urgent' | 'executive';
+type Channel = 'email' | 'whatsapp' | 'sms';
 
 /* ---------- Robot logo ---------- */
 function RobotLogo({ size = 44 }: { size?: number }) {
@@ -104,20 +105,20 @@ export default function Home() {
     }
   }, []);
 
-  // Sequence Configuration with AI Tone Persona Controls
+  // Sequence Configuration with AI Tone & Multi-Channel Selection
   const [sequences, setSequences] = useState([
     {
-      id: 1, day: 3, enabled: true, tone: 'friendly' as Tone,
+      id: 1, day: 3, enabled: true, tone: 'friendly' as Tone, channel: 'email' as Channel,
       subject: 'Friendly Reminder: Invoice {{invoice_id}} is due',
       body: 'Hi {{customer_name}},\n\nHope you are having a great week! This is a quick friendly note that invoice {{invoice_id}} for {{amount}} was due on {{due_date}}.\n\nYou can easily settle this online here: {{payment_link}}',
     },
     {
-      id: 2, day: 7, enabled: true, tone: 'firm' as Tone,
+      id: 2, day: 7, enabled: true, tone: 'firm' as Tone, channel: 'whatsapp' as Channel,
       subject: 'Second Notice: Overdue Invoice {{invoice_id}}',
       body: 'Hi {{customer_name}},\n\nOur records show that invoice {{invoice_id}} ({{amount}}) remains unpaid. Please arrange for payment today to ensure your account remains in good standing.\n\nPayment Link: {{payment_link}}',
     },
     {
-      id: 3, day: 14, enabled: false, tone: 'urgent' as Tone,
+      id: 3, day: 14, enabled: false, tone: 'urgent' as Tone, channel: 'sms' as Channel,
       subject: 'URGENT: Final Notice for Invoice {{invoice_id}}',
       body: 'ATTENTION {{customer_name}},\n\nYour account is now 14 days overdue for invoice {{invoice_id}}. Immediate settlement is required to prevent account suspension or late fees.\n\nSettle immediately: {{payment_link}}',
     },
@@ -150,6 +151,12 @@ export default function Home() {
     },
   };
 
+  const channelMeta: Record<Channel, { label: string; icon: any; color: string; badge: string }> = {
+    email: { label: 'Email', icon: Mail, color: 'text-sky-400 border-sky-500/30 bg-sky-500/10', badge: 'Standard' },
+    whatsapp: { label: 'WhatsApp', icon: PhoneCall, color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10', badge: 'Pro Channel' },
+    sms: { label: 'SMS Ping', icon: Smartphone, color: 'text-purple-400 border-purple-500/30 bg-purple-500/10', badge: 'Pro Channel' },
+  };
+
   const applyTonePreset = (idx: number, newTone: Tone) => {
     const preset = tonePresets[newTone];
     setSequences((prev) =>
@@ -158,6 +165,12 @@ export default function Home() {
           ? { ...s, tone: newTone, subject: preset.subject, body: preset.body }
           : s
       )
+    );
+  };
+
+  const setStepChannel = (idx: number, newChannel: Channel) => {
+    setSequences((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, channel: newChannel } : s))
     );
   };
 
@@ -206,7 +219,7 @@ export default function Home() {
 
   const unpaid = useMemo(() => invoices.filter((i) => i.status === 'unpaid'), [invoices]);
 
-  const [feed, setFeed] = useState<{ key: number; text: string }[]>([]);
+  const [feed, setFeed] = useState<{ key: number; text: string; channel: Channel }[]>([]);
   const [target, setTarget] = useState<string>('Standing by…');
   
   useEffect(() => {
@@ -214,10 +227,16 @@ export default function Home() {
     let n = 0;
     const tick = () => {
       const inv = unpaid[n % unpaid.length];
-      const step = sequences.filter((s) => s.enabled)[n % Math.max(1, sequences.filter((s) => s.enabled).length)];
+      const activeSteps = sequences.filter((s) => s.enabled);
+      const step = activeSteps[n % Math.max(1, activeSteps.length)];
+      const currentChannel = step?.channel || 'email';
       setTarget(inv.customer_name);
       setFeed((f) => [
-        { key: Date.now() + n, text: `Ping queued → ${inv.customer_name} (${step ? `Day ${step.day}` : 'manual'})` },
+        {
+          key: Date.now() + n,
+          text: `Ping (${currentChannel.toUpperCase()}) → ${inv.customer_name} [Step ${step?.day || 3}]`,
+          channel: currentChannel,
+        },
         ...f,
       ].slice(0, 4));
       n++;
@@ -238,7 +257,7 @@ export default function Home() {
   const titles: Record<Tab, string> = {
     dashboard: 'Dashboard Overview',
     invoices: 'Invoices & Client Portal',
-    sequence: 'AI Sequence & Persona Engine',
+    sequence: 'AI Sequence & Channel Engine',
     integrations: 'Accounting Integrations',
     team: 'Staff Management & Tasks',
   };
@@ -364,7 +383,7 @@ export default function Home() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <span className="text-xs font-semibold text-emerald-300">
-                14-Day Free Trial active — Autonomous follow-ups online. Upgrade to unlock Xero, MYOB & WhatsApp channels.
+                14-Day Free Trial active — Multi-channel engine ready. Upgrade to Pro ($15/mo) for WhatsApp & SMS automation.
               </span>
             </div>
             <button
@@ -387,6 +406,7 @@ export default function Home() {
               {/* OVERVIEW */}
               {activeTab === 'dashboard' && (
                 <>
+                  {/* HERO METRICS */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <motion.div variants={fadeUp} initial="hidden" animate="show" className={`${glass} p-8 relative overflow-hidden`}>
                       <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/20 to-transparent blur-3xl" />
@@ -419,7 +439,64 @@ export default function Home() {
                     </motion.div>
                   </div>
 
+                  {/* MULTI-CHANNEL DISTRIBUTION BREAKDOWN WIDGET */}
                   <motion.div variants={fadeUp} initial="hidden" animate="show" custom={2} className={`${glass} p-6 space-y-4`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                          <Radio className="w-4 h-4 text-lime-400" /> Active Communication Channels
+                        </h2>
+                        <p className="text-xs text-slate-400">Live dispatch share across reminder channels</p>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('sequence')}
+                        className="text-xs text-blue-400 font-semibold hover:underline cursor-pointer"
+                      >
+                        Configure Channels →
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 pt-2">
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-sky-500/20 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-sky-400" /> Email
+                          </span>
+                          <span className="text-xs font-mono font-bold text-sky-400">60%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                          <div className="bg-sky-400 h-full w-[60%]" />
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-emerald-500/20 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                            <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> WhatsApp
+                          </span>
+                          <span className="text-xs font-mono font-bold text-emerald-400">30%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                          <div className="bg-emerald-400 h-full w-[30%]" />
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-purple-500/20 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                            <Smartphone className="w-3.5 h-3.5 text-purple-400" /> SMS
+                          </span>
+                          <span className="text-xs font-mono font-bold text-purple-400">10%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                          <div className="bg-purple-400 h-full w-[10%]" />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* RECOVERY OVER TIME CHART */}
+                  <motion.div variants={fadeUp} initial="hidden" animate="show" custom={3} className={`${glass} p-6 space-y-4`}>
                     <div className="flex items-center justify-between">
                       <div>
                         <h2 className="text-base font-bold text-slate-100">Recovery Over Time</h2>
@@ -443,7 +520,8 @@ export default function Home() {
                     </div>
                   </motion.div>
 
-                  <motion.div variants={fadeUp} initial="hidden" animate="show" custom={3} className={`${glass} p-6 grid md:grid-cols-[auto_1fr] gap-8 items-center`}>
+                  {/* BOT RADAR */}
+                  <motion.div variants={fadeUp} initial="hidden" animate="show" custom={4} className={`${glass} p-6 grid md:grid-cols-[auto_1fr] gap-8 items-center`}>
                     <div className="relative w-48 h-48 mx-auto">
                       <div className="absolute inset-0 rounded-full border border-lime-400/30 bg-slate-950/60" />
                       <div className="absolute inset-8 rounded-full border border-lime-400/20" />
@@ -572,15 +650,15 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SEQUENCE ENGINE WITH AI TONE SELECTOR */}
+              {/* SEQUENCE ENGINE WITH CHANNEL TOGGLES */}
               {activeTab === 'sequence' && (
                 <div className="space-y-6">
                   <div className={`${glass} flex items-center justify-between p-6`}>
                     <div>
                       <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-lime-400" /> AI Tone & Persona Engine
+                        <Sparkles className="w-4 h-4 text-lime-400" /> AI Sequence & Multi-Channel Engine
                       </h2>
-                      <p className="text-xs text-slate-400">Select Qubi AI's communication tone for each follow-up step.</p>
+                      <p className="text-xs text-slate-400">Configure reminder intervals, AI personas, and dispatch channels.</p>
                     </div>
                     <button
                       onClick={handleSaveSequence}
@@ -599,7 +677,7 @@ export default function Home() {
                             <span className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold text-xs">
                               {seq.id}
                             </span>
-                            <span className="font-bold text-slate-200 text-sm">Day {seq.day} Automated Follow-up</span>
+                            <span className="font-bold text-slate-200 text-sm">Day {seq.day} Automated Step</span>
                           </div>
                           <label className="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer">
                             <span>Active</span>
@@ -612,8 +690,39 @@ export default function Home() {
                           </label>
                         </div>
 
-                        {/* TONE SELECTOR */}
+                        {/* CHANNEL TOGGLE SELECTOR */}
                         <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                            <Radio className="w-3.5 h-3.5 text-lime-400" /> Dispatch Channel:
+                          </label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {(['email', 'whatsapp', 'sms'] as Channel[]).map((cKey) => {
+                              const CIcon = channelMeta[cKey].icon;
+                              const isSelected = seq.channel === cKey;
+                              return (
+                                <button
+                                  key={cKey}
+                                  type="button"
+                                  onClick={() => setStepChannel(idx, cKey)}
+                                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-between cursor-pointer ${
+                                    isSelected
+                                      ? channelMeta[cKey].color + ' ring-1 ring-white/20'
+                                      : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-slate-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <CIcon className="w-3.5 h-3.5" />
+                                    <span>{channelMeta[cKey].label}</span>
+                                  </div>
+                                  <span className="text-[10px] opacity-75 font-normal">{channelMeta[cKey].badge}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* AI TONE SELECTOR */}
+                        <div className="space-y-2 pt-2">
                           <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                             <MessageSquare className="w-3.5 h-3.5 text-lime-400" /> AI Tone Persona:
                           </label>
@@ -626,7 +735,7 @@ export default function Home() {
                                 className={`px-3 py-2 rounded-xl text-xs font-bold border transition text-left cursor-pointer ${
                                   seq.tone === tKey
                                     ? tonePresets[tKey].color + ' ring-1 ring-white/20'
-                                    : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                                    : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-slate-200'
                                 }`}
                               >
                                 <div>{tonePresets[tKey].label}</div>
