@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const clientId = process.env.XERO_CLIENT_ID;
   const redirectUri = process.env.XERO_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/xero';
-  const scopes = 'openid profile email accounting.transactions accounting.contacts offline_access';
+  const scopes = 'openid profile email accounting.transactions accounting.contacts accounting.settings offline_access';
   
   if (!clientId) {
     return NextResponse.json({ error: 'XERO_CLIENT_ID environment variable is missing' }, { status: 500 });
