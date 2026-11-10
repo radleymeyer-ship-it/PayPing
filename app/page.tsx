@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Clock, Send, Settings, BarChart3, RefreshCw, Calendar, CheckCircle, Save, Mail,
   AlertCircle, TrendingUp, TrendingDown, Globe2, Radar, Zap, Plug, Plus, ArrowDown, LayoutDashboard,
-  Users, Layers, ExternalLink, Activity, ShieldCheck
+  Users, Layers, ExternalLink, Activity, ShieldCheck, Sparkles, MessageSquare
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/currency';
@@ -16,6 +16,7 @@ declare global {
   }
 }
 type Tab = 'dashboard' | 'invoices' | 'sequence' | 'integrations' | 'team';
+type Tone = 'friendly' | 'firm' | 'urgent' | 'executive';
 
 /* ---------- Robot logo ---------- */
 function RobotLogo({ size = 44 }: { size?: number }) {
@@ -103,23 +104,62 @@ export default function Home() {
     }
   }, []);
 
+  // Sequence Configuration with AI Tone Persona Controls
   const [sequences, setSequences] = useState([
     {
-      id: 1, day: 3, enabled: true,
+      id: 1, day: 3, enabled: true, tone: 'friendly' as Tone,
       subject: 'Friendly Reminder: Invoice {{invoice_id}} is due',
-      body: 'Hi {{customer_name}},\n\nThis is a friendly reminder that invoice {{invoice_id}} for {{amount}} was due on {{due_date}}.\n\nYou can complete payment here: {{payment_link}}',
+      body: 'Hi {{customer_name}},\n\nHope you are having a great week! This is a quick friendly note that invoice {{invoice_id}} for {{amount}} was due on {{due_date}}.\n\nYou can easily settle this online here: {{payment_link}}',
     },
     {
-      id: 2, day: 7, enabled: true,
+      id: 2, day: 7, enabled: true, tone: 'firm' as Tone,
       subject: 'Second Notice: Overdue Invoice {{invoice_id}}',
-      body: 'Hi {{customer_name}},\n\nWe haven’t received payment for invoice {{invoice_id}} ({{amount}}). Please take a moment to settle this balance.',
+      body: 'Hi {{customer_name}},\n\nOur records show that invoice {{invoice_id}} ({{amount}}) remains unpaid. Please arrange for payment today to ensure your account remains in good standing.\n\nPayment Link: {{payment_link}}',
     },
     {
-      id: 3, day: 14, enabled: false,
+      id: 3, day: 14, enabled: false, tone: 'urgent' as Tone,
       subject: 'URGENT: Final Notice for Invoice {{invoice_id}}',
-      body: 'Hi {{customer_name}},\n\nYour account is now 14 days overdue for invoice {{invoice_id}}. Please remit payment immediately.',
+      body: 'ATTENTION {{customer_name}},\n\nYour account is now 14 days overdue for invoice {{invoice_id}}. Immediate settlement is required to prevent account suspension or late fees.\n\nSettle immediately: {{payment_link}}',
     },
   ]);
+
+  const tonePresets: Record<Tone, { label: string; color: string; subject: string; body: string }> = {
+    friendly: {
+      label: 'Friendly & Soft',
+      color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      subject: 'Friendly Reminder: Invoice {{invoice_id}} is due',
+      body: 'Hi {{customer_name}},\n\nHope you are well! Just a gentle reminder that invoice {{invoice_id}} for {{amount}} was due on {{due_date}}.\n\nPay online: {{payment_link}}',
+    },
+    firm: {
+      label: 'Firm & Professional',
+      color: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+      subject: 'Second Notice: Overdue Balance for Invoice {{invoice_id}}',
+      body: 'Hi {{customer_name}},\n\nWe haven’t received payment for invoice {{invoice_id}} ({{amount}}). Please take a moment to settle this outstanding balance.\n\nPayment Link: {{payment_link}}',
+    },
+    urgent: {
+      label: 'Urgent / Final Notice',
+      color: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+      subject: 'URGENT NOTICE: Overdue Invoice {{invoice_id}}',
+      body: 'ATTENTION {{customer_name}},\n\nYour account is now overdue for invoice {{invoice_id}} ({{amount}}). Please settle this balance immediately to avoid late fees or collection escalation.\n\nLink: {{payment_link}}',
+    },
+    executive: {
+      label: 'Executive Escalation',
+      color: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      subject: 'Overdue Account Review — Invoice {{invoice_id}}',
+      body: 'Dear {{customer_name}},\n\nThis message is escalated regarding overdue invoice {{invoice_id}} ({{amount}}). Kindly reply to arrange payment or confirm transfer details.\n\nDirect settlement link: {{payment_link}}',
+    },
+  };
+
+  const applyTonePreset = (idx: number, newTone: Tone) => {
+    const preset = tonePresets[newTone];
+    setSequences((prev) =>
+      prev.map((s, i) =>
+        i === idx
+          ? { ...s, tone: newTone, subject: preset.subject, body: preset.body }
+          : s
+      )
+    );
+  };
 
   const fetchInvoices = async () => {
     setLoading(true);
@@ -138,13 +178,10 @@ export default function Home() {
     fetchInvoices();
   }, []);
 
-  // Compute metrics
   useEffect(() => {
     if (!invoices || invoices.length === 0) return;
-
     let collected = 0;
     let outstanding = 0;
-
     const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid');
     
     invoices.forEach((inv: any) => {
@@ -201,7 +238,7 @@ export default function Home() {
   const titles: Record<Tab, string> = {
     dashboard: 'Dashboard Overview',
     invoices: 'Invoices & Client Portal',
-    sequence: 'Sequence Engine',
+    sequence: 'AI Sequence & Persona Engine',
     integrations: 'Accounting Integrations',
     team: 'Staff Management & Tasks',
   };
@@ -243,27 +280,25 @@ export default function Home() {
     }
   };
 
-  // Sample data for Recovery Over Time chart
   const monthlyData = [
-    { month: 'Jan', val: 12000, height: '30%' },
-    { month: 'Feb', val: 18000, height: '45%' },
-    { month: 'Mar', val: 24000, height: '60%' },
-    { month: 'Apr', val: 21000, height: '52%' },
-    { month: 'May', val: 32000, height: '80%' },
-    { month: 'Jun', val: 29000, height: '72%' },
-    { month: 'Jul', val: 42000, height: '95%' },
+    { month: 'Jan', height: '30%' },
+    { month: 'Feb', height: '45%' },
+    { month: 'Mar', height: '60%' },
+    { month: 'Apr', height: '52%' },
+    { month: 'May', height: '80%' },
+    { month: 'Jun', height: '72%' },
+    { month: 'Jul', height: '95%' },
   ];
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100 flex font-sans overflow-hidden">
-      {/* Background ambient lighting */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -left-40 w-[32rem] h-[32rem] rounded-full bg-blue-600/20 blur-[120px]" />
         <div className="absolute top-1/3 -right-40 w-[28rem] h-[28rem] rounded-full bg-lime-400/10 blur-[120px]" />
         <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
-      {/* LEFT SIDEBAR NAVIGATION */}
+      {/* LEFT SIDEBAR */}
       <aside className="relative z-20 w-64 border-r border-white/10 bg-slate-950/80 backdrop-blur-xl flex flex-col justify-between p-6 hidden md:flex">
         <div className="space-y-8">
           <div className="flex items-center space-x-3">
@@ -309,32 +344,19 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
-        
         <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur-xl px-8 py-4 flex items-center justify-between">
           <h1 className="text-[22px] font-bold text-slate-100">{titles[activeTab]}</h1>
-
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="flex items-center space-x-1.5 text-xs bg-slate-900/70 border border-white/10 px-3 py-2 rounded-lg hover:bg-slate-800 transition text-slate-200 cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Sync Books</span>
-            </button>
-
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
-            >
-              Start 14-Day Free Trial
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
+          >
+            Start 14-Day Free Trial
+          </button>
         </header>
 
         <main className="flex-1 max-w-7xl w-full mx-auto p-8 space-y-6">
-          
           <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 rounded-xl backdrop-blur-md">
             <div className="flex items-center space-x-2.5">
               <span className="relative flex h-2 w-2">
@@ -362,12 +384,10 @@ export default function Home() {
               transition={{ duration: 0.25 }}
               className="space-y-6"
             >
-              {/* ---------- OVERVIEW TAB ---------- */}
+              {/* OVERVIEW */}
               {activeTab === 'dashboard' && (
                 <>
-                  {/* HERO METRICS GRID (DebtGuard Style) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Total Recovered Hero Card */}
                     <motion.div variants={fadeUp} initial="hidden" animate="show" className={`${glass} p-8 relative overflow-hidden`}>
                       <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/20 to-transparent blur-3xl" />
                       <div className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Total Recovered</div>
@@ -383,7 +403,6 @@ export default function Home() {
                       </div>
                     </motion.div>
 
-                    {/* Recovery Rate Card */}
                     <motion.div variants={fadeUp} initial="hidden" animate="show" custom={1} className={`${glass} p-8 relative overflow-hidden flex flex-col justify-between`}>
                       <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/20 to-transparent blur-3xl" />
                       <div>
@@ -400,18 +419,13 @@ export default function Home() {
                     </motion.div>
                   </div>
 
-                  {/* RECOVERY OVER TIME CHART BLOCK */}
                   <motion.div variants={fadeUp} initial="hidden" animate="show" custom={2} className={`${glass} p-6 space-y-4`}>
                     <div className="flex items-center justify-between">
                       <div>
                         <h2 className="text-base font-bold text-slate-100">Recovery Over Time</h2>
                         <p className="text-xs text-slate-400">Monthly breakdown of automated payment recovery performance</p>
                       </div>
-                      <div className="flex items-center space-x-4 text-xs font-semibold">
-                        <span className="flex items-center gap-1.5 text-blue-400"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Invoices Recovered</span>
-                      </div>
                     </div>
-
                     <div className="h-44 flex items-end justify-between gap-4 pt-6 px-4 border-b border-white/5 pb-2">
                       {monthlyData.map((d, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
@@ -429,7 +443,6 @@ export default function Home() {
                     </div>
                   </motion.div>
 
-                  {/* BOT DISPATCH RADAR */}
                   <motion.div variants={fadeUp} initial="hidden" animate="show" custom={3} className={`${glass} p-6 grid md:grid-cols-[auto_1fr] gap-8 items-center`}>
                     <div className="relative w-48 h-48 mx-auto">
                       <div className="absolute inset-0 rounded-full border border-lime-400/30 bg-slate-950/60" />
@@ -483,16 +496,9 @@ export default function Home() {
                 </>
               )}
 
-              {/* ---------- INVOICES & CLIENT PORTAL TAB ---------- */}
+              {/* INVOICES */}
               {activeTab === 'invoices' && (
                 <div className={`${glass} p-6 space-y-6`}>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-base font-bold text-slate-100">Live Invoices</h2>
-                      <p className="text-xs text-slate-400">Manage payment links and client self-service portal access.</p>
-                    </div>
-                  </div>
-
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead className="text-slate-400 uppercase font-bold tracking-wider text-xs">
@@ -501,7 +507,7 @@ export default function Home() {
                           <th className="p-3">Invoice ID</th>
                           <th className="p-3">Amount</th>
                           <th className="p-3">Status</th>
-                          <th className="p-3">Client Portal Link</th>
+                          <th className="p-3">Portal Link</th>
                           <th className="p-3 text-right">Action</th>
                         </tr>
                       </thead>
@@ -516,9 +522,6 @@ export default function Home() {
                           invoices.map((inv, i) => (
                             <motion.tr
                               key={inv.id}
-                              initial={{ opacity: 0, x: -12 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: Math.min(i, 10) * 0.04 }}
                               className="border-b border-white/5 hover:bg-white/[0.04] transition group text-xs"
                             >
                               <td className="p-3 font-semibold text-slate-200">
@@ -569,13 +572,15 @@ export default function Home() {
                 </div>
               )}
 
-              {/* ---------- SEQUENCE ENGINE TAB ---------- */}
+              {/* SEQUENCE ENGINE WITH AI TONE SELECTOR */}
               {activeTab === 'sequence' && (
                 <div className="space-y-6">
                   <div className={`${glass} flex items-center justify-between p-6`}>
                     <div>
-                      <h2 className="text-base font-bold text-slate-100">Automated Follow-up Cadence</h2>
-                      <p className="text-xs text-slate-400">Configure reminder intervals across Email, SMS, and WhatsApp.</p>
+                      <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-lime-400" /> AI Tone & Persona Engine
+                      </h2>
+                      <p className="text-xs text-slate-400">Select Qubi AI's communication tone for each follow-up step.</p>
                     </div>
                     <button
                       onClick={handleSaveSequence}
@@ -586,42 +591,78 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div className="grid gap-4">
+                  <div className="grid gap-6">
                     {sequences.map((seq, idx) => (
                       <div key={seq.id} className={`${glass} p-6 space-y-4`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <span className="w-6 h-6 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold text-xs">
+                            <span className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold text-xs">
                               {seq.id}
                             </span>
-                            <span className="font-bold text-slate-200 text-sm">Day {seq.day} Automated Step</span>
+                            <span className="font-bold text-slate-200 text-sm">Day {seq.day} Automated Follow-up</span>
                           </div>
-                          <input
-                            type="checkbox"
-                            checked={seq.enabled}
-                            onChange={(e) => updateSequence(idx, { enabled: e.target.checked })}
-                            className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                          />
+                          <label className="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer">
+                            <span>Active</span>
+                            <input
+                              type="checkbox"
+                              checked={seq.enabled}
+                              onChange={(e) => updateSequence(idx, { enabled: e.target.checked })}
+                              className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                            />
+                          </label>
                         </div>
-                        <input
-                          type="text"
-                          value={seq.subject}
-                          onChange={(e) => updateSequence(idx, { subject: e.target.value })}
-                          className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
-                        />
-                        <textarea
-                          rows={2}
-                          value={seq.body}
-                          onChange={(e) => updateSequence(idx, { body: e.target.value })}
-                          className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
-                        />
+
+                        {/* TONE SELECTOR */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                            <MessageSquare className="w-3.5 h-3.5 text-lime-400" /> AI Tone Persona:
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {(['friendly', 'firm', 'urgent', 'executive'] as Tone[]).map((tKey) => (
+                              <button
+                                key={tKey}
+                                type="button"
+                                onClick={() => applyTonePreset(idx, tKey)}
+                                className={`px-3 py-2 rounded-xl text-xs font-bold border transition text-left cursor-pointer ${
+                                  seq.tone === tKey
+                                    ? tonePresets[tKey].color + ' ring-1 ring-white/20'
+                                    : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                                }`}
+                              >
+                                <div>{tonePresets[tKey].label}</div>
+                                {seq.tone === tKey && <span className="text-[10px] opacity-75 font-normal">Active Preset</span>}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                          <div>
+                            <label className="text-[11px] text-slate-400 block mb-1">Subject Line</label>
+                            <input
+                              type="text"
+                              value={seq.subject}
+                              onChange={(e) => updateSequence(idx, { subject: e.target.value })}
+                              className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] text-slate-400 block mb-1">Message Template Body</label>
+                            <textarea
+                              rows={3}
+                              value={seq.body}
+                              onChange={(e) => updateSequence(idx, { body: e.target.value })}
+                              className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-sans"
+                            />
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* ---------- INTEGRATIONS TAB (QuickBooks, Xero, MYOB) ---------- */}
+              {/* INTEGRATIONS */}
               {activeTab === 'integrations' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className={`${glass} p-6 space-y-4`}>
@@ -674,7 +715,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* ---------- STAFF & TASKS TAB (Pro Feature) ---------- */}
+              {/* STAFF & TASKS */}
               {activeTab === 'team' && (
                 <div className={`${glass} p-6 space-y-6`}>
                   <div className="flex justify-between items-center">
@@ -714,7 +755,7 @@ export default function Home() {
         </main>
       </div>
 
-      {/* ---------- AUTH & UPGRADE MODAL ---------- */}
+      {/* MODAL */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
           <motion.div
