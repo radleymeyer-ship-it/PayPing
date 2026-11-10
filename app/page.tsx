@@ -169,7 +169,6 @@ export default function Home() {
     sms: { label: 'SMS Ping', icon: Smartphone, color: 'text-purple-400 border-purple-500/30 bg-purple-500/10', badge: 'Pro Channel' },
   };
 
-  // Helper for mock risk grades (A to F) based on invoice ID string hash
   const getRiskGrade = (id: string, status: string) => {
     if (status === 'paid') return { grade: 'Grade A', label: 'Fast Payer', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
     const charCode = (id || 'a').charCodeAt(0);
@@ -815,7 +814,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* INTEGRATIONS */}
+              {/* INTEGRATIONS WITH FUNCTIONAL XERO & QUICKBOOKS BUTTONS */}
               {activeTab === 'integrations' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className={`${glass} p-6 space-y-4`}>
@@ -827,7 +826,9 @@ export default function Home() {
                       <p className="text-xs text-slate-400">Sync invoices and financial records seamlessly.</p>
                     </div>
                     <button
-                      onClick={() => setShowAuthModal(true)}
+                      onClick={() => {
+                        window.location.href = '/api/auth/quickbooks';
+                      }}
                       className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-xs font-semibold text-slate-200 transition cursor-pointer"
                     >
                       {qbdConnected ? "Connected" : "Connect QuickBooks"}
@@ -843,7 +844,9 @@ export default function Home() {
                       <p className="text-xs text-slate-400">Automate collection triggers for Xero books.</p>
                     </div>
                     <button
-                      onClick={() => setShowAuthModal(true)}
+                      onClick={() => {
+                        window.location.href = '/api/auth/xero';
+                      }}
                       className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-xs font-semibold text-slate-200 transition cursor-pointer"
                     >
                       {xeroConnected ? "Connected" : "Connect Xero"}
