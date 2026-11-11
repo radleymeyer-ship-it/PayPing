@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,8 +8,11 @@ const supabase = createClient(
 );
 
 export async function GET(request: Request) {
+  // Awaiting headers() forces Next.js to classify this route as dynamic 
+  // before any request properties are read.
+  await headers();
+
   try {
-    // Parse the URL safely inside a runtime helper block
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
 
