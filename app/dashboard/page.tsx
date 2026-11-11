@@ -1,10 +1,11 @@
-export default async function DashboardPage({
+import { Suspense } from 'react';
+
+function DashboardContent({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string }>;
+  searchParams: { success?: string };
 }) {
-  const params = await searchParams;
-  const isConnected = params.success === 'xero_connected';
+  const isConnected = searchParams.success === 'xero_connected';
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
@@ -20,5 +21,19 @@ export default async function DashboardPage({
         Your automated invoice and contact management system is ready.
       </p>
     </main>
+  );
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string }>;
+}) {
+  const params = await searchParams;
+
+  return (
+    <Suspense fallback={<div className="p-8">Loading dashboard...</div>}>
+      <DashboardContent searchParams={params} />
+    </Suspense>
   );
 }
