@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client with Service Role Key to securely write server-side
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -71,7 +73,7 @@ export async function GET(request: Request) {
     const { error: dbError } = await supabase
       .from('xero_connections')
       .upsert({
-        user_id: 'default-user', // Update this if tracking authenticated app users
+        user_id: 'default-user',
         tenant_id: tenantId,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
