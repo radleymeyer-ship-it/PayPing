@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,14 +6,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET(request: Request) {
-  // Awaiting headers() forces Next.js to classify this route as dynamic 
-  // before any request properties are read.
-  await headers();
-
+export async function GET(request: NextRequest) {
   try {
-    const requestUrl = new URL(request.url);
-    const code = requestUrl.searchParams.get('code');
+    // request.nextUrl is native to NextRequest and avoids static prerender bailout errors
+    const code = request.nextUrl.searchParams.get('code');
 
     if (!code) {
       console.error('Xero Callback Error: Authorization code missing from URL');
