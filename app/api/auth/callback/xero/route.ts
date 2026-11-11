@@ -90,7 +90,7 @@ export async function GET(request: Request) {
     console.log('Successfully saved Xero connection to Supabase!');
 
     // 4. Redirect back to your app dashboard with a success flag
-    const redirectUrl = new URL('/dashboard?success=xero_connected', incomingUrl);
+    const redirectUrl = new URL('/?success=xero_connected', incomingUrl);
     return NextResponse.redirect(redirectUrl);
 
   } catch (err: any) {
