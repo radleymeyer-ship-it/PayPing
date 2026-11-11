@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { connection } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,8 +8,8 @@ const supabase = createClient(
 );
 
 export async function GET(request: Request) {
-  // Calling headers() forces Next.js to opt out of static prerendering safely
-  headers();
+  // Opt out of static prerendering safely at request-time
+  await connection();
 
   try {
     const url = new URL(request.url);
