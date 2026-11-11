@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const clientId = process.env.XERO_CLIENT_ID;
-  const redirectUri = process.env.XERO_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/xero';
+  const redirectUri = process.env.XERO_REDIRECT_URI || 'https://pay-ping-git-main-radleymeyer-6315.vercel.app/api/auth/callback/xero';
   const scopes = [
   'openid',
   'profile',
