@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client with Service Role Key to bypass RLS in server actions
+// Initialize Supabase client with Service Role Key to securely write server-side
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -21,6 +23,11 @@ export async function GET(request: Request) {
     const clientSecret = process.env.XERO_CLIENT_SECRET;
     const redirectUri = process.env.XERO_REDIRECT_URI;
 
+    if (!clientId || !clientSecret || !redirectUri) {
+      console.error('Xero Callback Error: Missing environment variables');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
     // 1. Exchange authorization code for tokens
     const tokenResponse = await fetch('https://identity.xero.com/connect/token', {
       method: 'POST',
@@ -31,7 +38,7 @@ export async function GET(request: Request) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: redirectUri!,
+        redirect_uri: redirectUri,
       }),
     });
 
@@ -66,7 +73,7 @@ export async function GET(request: Request) {
     const { error: dbError } = await supabase
       .from('xero_connections')
       .upsert({
-        user_id: 'default-user', // Update this if you have real user session tracking
+        user_id: 'default-user', // Update this if tracking authenticated app users
         tenant_id: tenantId,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
@@ -80,7 +87,7 @@ export async function GET(request: Request) {
 
     console.log('Successfully saved Xero connection to Supabase!');
 
-    // 4. Redirect back to your app dashboard
+    // 4. Redirect back to your app dashboard with a success flag
     return NextResponse.redirect(new URL('/dashboard?success=xero_connected', request.url));
 
   } catch (err: any) {
