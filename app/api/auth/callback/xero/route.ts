@@ -8,11 +8,10 @@ const supabase = createClient(
 
 export async function GET(request: Request) {
   try {
-    // Extract searchParams safely by constructing URL from request.url inside the runtime handler
-    const fullUrl = request.url;
-    const searchParamsIndex = fullUrl.indexOf('?');
-    const searchParams = searchParamsIndex !== -1 ? new URLSearchParams(fullUrl.substring(searchParamsIndex)) : new URLSearchParams();
-    const code = searchParams.get('code');
+    // Safely evaluate request URL only when the request actually hits the server at runtime
+    const incomingUrl = request.url;
+    const urlObj = new URL(incomingUrl, 'http://localhost'); // fallback base to prevent static parser evaluation crashes
+    const code = urlObj.searchParams.get('code');
 
     if (!code) {
       console.error('Xero Callback Error: Authorization code missing from URL');
@@ -88,9 +87,8 @@ export async function GET(request: Request) {
     console.log('Successfully saved Xero connection to Supabase!');
 
     // 4. Redirect back to your app dashboard with a success flag
-    const baseUrl = fullUrl.substring(0, searchParamsIndex !== -1 ? searchParamsIndex : fullUrl.length);
-    const redirectTarget = `${baseUrl.replace('/api/auth/callback/xero', '')}/dashboard?success=xero_connected`;
-    return NextResponse.redirect(redirectTarget);
+    const redirectUrl = new URL('/dashboard?success=xero_connected', incomingUrl);
+    return NextResponse.redirect(redirectUrl);
 
   } catch (err: any) {
     console.error('Unexpected error in Xero callback route:', err);
