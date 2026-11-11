@@ -64,6 +64,12 @@ export default function Home() {
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<{ id: string; success: boolean; message: string } | null>(null);
+  
+  // 👉 Place them here correctly:
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [password, setPassword] = useState<string>('');
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const [metrics, setMetrics] = useState({
     totalRecovered: 0,
     activeOverdue: 0,
@@ -405,23 +411,28 @@ export default function Home() {
         </header>
 
         <main className="flex-1 max-w-7xl w-full mx-auto p-8 space-y-6">
-          <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 rounded-xl backdrop-blur-md">
-            <div className="flex items-center space-x-2.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-semibold text-emerald-300">
-                14-Day Free Trial active — Risk Scoring & Simulator online. Upgrade to Pro ($15/mo) for WhatsApp automation.
-              </span>
-            </div>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4 cursor-pointer"
-            >
-              Unlock Pro ($15/mo) →
-            </button>
-          </div>
+  
+  
+  {/* Hide trial banner once authenticated */}
+  {!isAuthenticated && (
+    <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 rounded-xl backdrop-blur-md">
+      <div className="flex items-center space-x-2.5">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span className="text-xs font-semibold text-emerald-300">
+          14-Day Free Trial active — Risk Scoring & Simulator online. Upgrade to Pro ($15/mo) for WhatsApp automation.
+        </span>
+      </div>
+      <button
+        onClick={() => setShowAuthModal(true)}
+        className="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4 cursor-pointer"
+      >
+        Unlock Pro ($15/mo) →
+      </button>
+    </div>
+  )}
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -1026,16 +1037,41 @@ export default function Home() {
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedPlan === 'pro') {
-                    handlePaddleCheckout();
-                  } else {
-                    alert("14-Day Free Trial initialized!");
-                    setShowAuthModal(false);
+       {/* Password Input Field */}
+            <div>
+              <label className="text-xs font-medium text-slate-400 block mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Error Message Box */}
+            {authError && (
+              <div className="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
+                {authError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedPlan === 'pro') {
+                  handlePaddleCheckout();
+                } else {
+                  if (!email || !password) {
+                    setAuthError('Please enter both email and password.');
+                    return;
                   }
-                }}
+                  setIsAuthenticated(true);
+                  setInvoices([]); // Clears demo invoices for a clean workspace!
+                  setShowAuthModal(false);
+                  setAuthError(null);
+                }
+              }}
                 className={`w-full py-3 text-xs font-bold rounded-xl transition cursor-pointer ${
                   selectedPlan === 'pro'
                     ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
