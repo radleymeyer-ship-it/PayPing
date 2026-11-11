@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client with Service Role Key to securely write server-side
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function GET(request: Request) {
+  // Calling headers() forces Next.js to opt out of static prerendering safely
+  headers();
+
   try {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
