@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,10 +8,12 @@ const supabase = createClient(
 );
 
 export async function GET(request: Request) {
+  // Explicitly opt out of static prerendering for this API route
+  await headers();
+
   try {
-    // Safely evaluate request URL only when the request actually hits the server at runtime
     const incomingUrl = request.url;
-    const urlObj = new URL(incomingUrl, 'http://localhost'); // fallback base to prevent static parser evaluation crashes
+    const urlObj = new URL(incomingUrl);
     const code = urlObj.searchParams.get('code');
 
     if (!code) {

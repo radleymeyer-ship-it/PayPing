@@ -1,11 +1,12 @@
 import { Suspense } from 'react';
 
-function DashboardContent({
+async function DashboardContent({
   searchParams,
 }: {
-  searchParams: { success?: string };
+  searchParams: Promise<{ success?: string }>;
 }) {
-  const isConnected = searchParams.success === 'xero_connected';
+  const params = await searchParams;
+  const isConnected = params.success === 'xero_connected';
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
@@ -24,16 +25,14 @@ function DashboardContent({
   );
 }
 
-export default async function DashboardPage({
+export default function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ success?: string }>;
 }) {
-  const params = await searchParams;
-
   return (
     <Suspense fallback={<div className="p-8">Loading dashboard...</div>}>
-      <DashboardContent searchParams={params} />
+      <DashboardContent searchParams={searchParams} />
     </Suspense>
   );
 }
