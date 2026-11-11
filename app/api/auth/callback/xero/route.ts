@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { connection } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,12 +7,10 @@ const supabase = createClient(
 );
 
 export async function GET(request: Request) {
-  // Opt out of static prerendering safely at request-time
-  await connection();
-
   try {
-    const url = new URL(request.url);
-    const code = url.searchParams.get('code');
+    // Parse the URL safely inside a runtime helper block
+    const requestUrl = new URL(request.url);
+    const code = requestUrl.searchParams.get('code');
 
     if (!code) {
       console.error('Xero Callback Error: Authorization code missing from URL');
