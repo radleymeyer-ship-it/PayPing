@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -6,10 +6,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    // request.nextUrl is native to NextRequest and avoids static prerender bailout errors
-    const code = request.nextUrl.searchParams.get('code');
+    // Extract searchParams safely by constructing URL from request.url inside the runtime handler
+    const fullUrl = request.url;
+    const searchParamsIndex = fullUrl.indexOf('?');
+    const searchParams = searchParamsIndex !== -1 ? new URLSearchParams(fullUrl.substring(searchParamsIndex)) : new URLSearchParams();
+    const code = searchParams.get('code');
 
     if (!code) {
       console.error('Xero Callback Error: Authorization code missing from URL');
@@ -85,7 +88,9 @@ export async function GET(request: NextRequest) {
     console.log('Successfully saved Xero connection to Supabase!');
 
     // 4. Redirect back to your app dashboard with a success flag
-    return NextResponse.redirect(new URL('/dashboard?success=xero_connected', request.url));
+    const baseUrl = fullUrl.substring(0, searchParamsIndex !== -1 ? searchParamsIndex : fullUrl.length);
+    const redirectTarget = `${baseUrl.replace('/api/auth/callback/xero', '')}/dashboard?success=xero_connected`;
+    return NextResponse.redirect(redirectTarget);
 
   } catch (err: any) {
     console.error('Unexpected error in Xero callback route:', err);
