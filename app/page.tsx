@@ -116,12 +116,14 @@ export default function Home() {
   const [xeroConnected, setXeroConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('qbd_connected') === 'true') setQbdConnected(true);
-      if (params.get('xero_connected') === 'true') setXeroConnected(true);
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('xero_connected') === 'true') {
+      setXeroConnected(true);
+      // 🔴 Are you setting mock/demo invoices here? Check if hardcoded invoices are being loaded back in!
     }
-  }, []);
+  }
+}, []);
 
   // Sequence Configuration with AI Tone & Multi-Channel Selection
   const [sequences, setSequences] = useState([
