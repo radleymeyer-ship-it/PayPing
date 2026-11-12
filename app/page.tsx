@@ -218,7 +218,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!invoices || invoices.length === 0) return;
+    if (!invoices || invoices.length === 0) {
+      setMetrics({
+        totalRecovered: 0,
+        activeOverdue: 0,
+        averageDSO: 0,
+        projectedCashFlow: 0,
+        recoveryRate: 0,
+      });
+      return;
+    }
+
     let collected = 0;
     let outstanding = 0;
     const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid');
@@ -237,9 +247,9 @@ export default function Home() {
     setMetrics({
       totalRecovered: collected,
       activeOverdue: outstanding,
-      averageDSO: 14,
+      averageDSO: 0,
       projectedCashFlow: outstanding * 0.85,
-      recoveryRate: rate || 90,
+      recoveryRate: rate,
     });
   }, [invoices]);
 
